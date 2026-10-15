@@ -1,251 +1,154 @@
 # mcdebate · 麦麦辩论局
 
-让不同手机上的 Agent 代表真实用户，围绕共享餐品展开辩论，最终由付款人确认消费决定。
+**让 AI 替你辩，和朋友一起点麦当劳。**
 
-**当前0.6.4：TypeScript后端、持续清单/多局对战、付款人接受、结账核价/交接及模拟订单/支付已实现，新增独立的真实建单客户端。** 旧纯辩论模式保持兼容。正式结果只记付款人Agent上报，已真实创建外带/堂食待支付订单各一份，未执行支付；本地fixture模式为明确标注的测试资料，生产AGENT_REPORTED模式由Agent直连官方查询/建单，不能把整个服务称为模拟。开发辩手和后端裁判默认DeepSeek deepseek-flash，关闭思考模式。阿里云已上线并接通CI后自动部署；手机端生产MCP连接与用户无VPN访问已确认，短口令识别效果仍须手机端复测。
+你想吃麦乐鸡，朋友想吃薯条。各自选中 `mcdebate` 技能，让两位 Agent 为自己的选餐立场辩一场；你们打开观战链接，看四条发言和 AI 裁判的结果，再决定买什么。点餐清单持续保留，可以先点餐、插入一局对战，再继续加购。
 
-本地研发资料见 [PRD](docs/PRD.md)、[CURRENT_STATUS](docs/CURRENT_STATUS.md) 和 [MCP 集成说明](docs/MCP_INTEGRATION.md)。`docs/` 按项目约定被 Git 忽略，仅保留在本地工作区；上述链接不会自动出现在新克隆的公开仓库中。
+这是基于麦当劳官方 MCP 的参赛 Skill 项目，由自建房间 MCP 提供跨客户端协作与实时观战。适合一起点餐的朋友、情侣和同事。项目为独立参赛作品，非麦当劳官方产品。
 
-## 手机端启动
+- [mcdebate Skill 源文件](skills/mcdebate/SKILL.md)
+- [Skill 版本、变更说明与导入包](skill-releases/README.md)
+- [麦当劳 MCP 集成说明](MCP_INTEGRATION.md)
+- [参赛声明](CONTEST_DECLARATION.md)
+- [报名 issue 标题](ISSUE_TITLE.txt) · [报名 issue 正文](ISSUE_BODY.md)
 
-生产服务统一命名为 `mcdebate`，地址 `https://47.243.195.171/mcp`，使用 Streamable HTTP，无需服务 Token 或额外 headers。
+## 能做什么
 
-用户说 **“mcdebate 开始”**；服务说明指引 Agent 使用已连接的房间工具，创建购物会话并展示邀请/观战链接，再逐步询问缺少的地点、确认门店和餐品偏好。昵称与辩题可用默认值，不让用户记工具参数。加入者说 **“加入 mcdebate”** 并粘贴邀请链接或房间号；已有会话则继续，已有房间中的“再来一局”创建新对战。
+- **两位 Agent 跨客户端协作**：房主创建房间，另一方用房间号或邀请加入；双方保留各自身份和凭证。
+- **用真实门店与餐品选餐**：用户给出大概地点，Agent 调用官方 MCP 搜索门店，用户确认后锁定到店自取门店，再查询菜单、单品和价格。
+- **实时观战、四条定胜负**：每局两轮、A/B 各两条发言，独立裁判评分并给出唯一胜者；网页自动滚动、展示等待动画，断线后可重新连接。
+- **自由穿插点餐与对战**：维护共享点餐草稿和个人项目，支持多局；胜者只产生推荐，不自动加购或删除另一方餐品。
+- **衔接真实点餐与支付**：指定付款人接受角色、核价并确认具体方案后，通过麦当劳官方 MCP 建单并提供官方链接。用户通过链接或官方页面二维码进入麦当劳 App，在购物车查看餐品并继续下单、支付。
 
-等待另一位Agent加入、上线、准备或发言时持续调用 get_room_state(wait_ms=5000)，单次由服务端等待5秒，实际周期另含宿主与网络耗时。双方对战分工写入共享topic，按真实player_id区分A/B、按reporter_player_id选择本人候选；立场不代表购买授权。观战链接原样取data.watch_url，支付链接仅取麦当劳官方成功返回。
+观战网页只读；加购、改数量和结账由 Agent 按用户意图操作。这里的“清单”是项目自己的点餐草稿，并非麦当劳官方购物车。
 
-21 个工具保留原英文名称，全部提供 `mcdebate` 标题与关键词描述。升级后宿主可能需要刷新工具列表；在客户端手动设置过的服务显示名由客户端管理，服务器不能替它改名。工具选择和持续运行由宿主 Agent 决定，描述更新不保证识别速度；豆包 work / workbuddy 手机端仍须实际复测。
+## 安装与开始
 
-门店必须用户确认；购物意图和数量、最终订单及付款授权不能由“开始”推断。观战网页保持只读。
+### 1. 两边分别连接 MCP
 
-## 分支、CI与部署
+每个参与选品的客户端启用以下服务：
 
-GitHub公开仓库：<https://github.com/PlonGuo/mcd-hackthon>。
+| 服务 | 地址 | 传输方式 | 认证 |
+| --- | --- | --- | --- |
+| mcdebate 房间服务 | `https://47.243.195.171/mcp` | Streamable HTTP | 无服务级 Token 或自定义 headers；入房后使用自己的短期玩家凭证 |
+| 麦当劳官方 MCP | `https://mcp.mcd.cn` | Streamable HTTP | 用户自己的麦当劳 MCP Token |
 
-日常从`main`新建分支，提交后发PR；`CI / checks`通过后合并。主分支要求PR、最新CI成功和讨论解决，禁止强推/删除。个人开发不要求另一位审阅人批准；CI检查对管理员同样生效。
+官方 Token 在 [麦当劳 MCP 开放平台](https://open.mcd.cn/mcp) 申请，接入方法见 [官方指南](https://github.com/M-China/mcd-mcp-server)。只把 Token 配置在客户端的私密认证设置中，不放进聊天、Skill、仓库或观战页面。
 
-CI使用Node22.23.3和项目固定pnpm版本，无需业务密钥。执行索引发布安全检查、完整测试、strict类型检查和Wrangler打包dry-run，再用Playwright分别验证Workers与Node的390/1280购物与模拟结账页面。不会调用真实模型/麦当劳交易或部署Cloudflare。`.dev.vars`、`.local`订单与凭证、运行数据、截图及本地`docs/`不发布。
+`/mcp` 是工具协议入口，不是观战网页。可以先访问 [服务健康检查](https://47.243.195.171/health)；观战地址由创建／加入工具实际返回。当前公网地址是临时 Demo 服务，不承诺长期保留；也可按 [部署说明](deploy/README.md) 自行部署。
 
-阿里云单机运行入口位于`src/runtime/node/`，复用业务代码，以SQLite保存房间和超时任务，进程内按房间串行执行。Node只监听本机8870，Nginx提供公网IP HTTPS与持续SSE。`main`通过同一CI后才部署该提交，健康检查失败恢复旧版本；PR只检查，不接触生产凭据。安装和凭据配置见[部署说明](deploy/README.md)。生产mcdebate MCP与阿里云管理MCP分别配置：前者给豆包/WorkBuddy使用，后者给开发Agent管理基础设施。
+### 2. 导入 mcdebate 技能
 
-## 本地运行
+- 豆包 work：[下载 0.2.0 导入包](skill-releases/mcdebate/0.2.0/packages/mcdebate-doubao-0.2.0.zip)。在技能管理中选择上传技能，导入 ZIP。
+- workbuddy：[下载 0.2.0 导入包](skill-releases/mcdebate/0.2.0/packages/mcdebate-workbuddy-0.2.0.zip)。进入“专家·技能·连接器 → 技能 → 添加技能 → 上传技能”，导入 ZIP。
 
-需要 Node.js 22.18 或以上（CI/服务器固定22.23.3）、pnpm 10。无需麦当劳 Token，无需先登录 Cloudflare。
+完成后启用技能；手机端新建会话，手动选择 `mcdebate`，并确认两个 MCP 在当前会话可用。不同版本的客户端入口可能有差异，桌面端安装后要实际确认手机端是否可选。Skill 提供流程指引，不能强制宿主预加载 MCP 或持续后台执行。
+
+### 3. 发起、加入、观战
+
+发起方选中技能后发送：
+
+> 开始。我支持麦乐鸡，对手支持薯条。
+
+Agent 创建购物房间，返回房间号和观战链接；随后逐项询问缺少的地点、门店确认和选品信息。房主把双方分工同步到共享辩题，另一方不需要猜测房主私聊里的内容。
+
+加入方选中技能后发送：
+
+> 加入这个房间：〈房主给出的房间号或邀请链接〉
+
+两边准备完成后，发送“开始对战”。双方 Agent 按回合提交发言，用户打开工具返回的完整 `watch_url` 观战。等待时持续调用 `get_room_state(wait_ms=5000)`；单次由服务器等待 5 秒，实际调用周期还包括宿主推理和网络耗时。
+
+### 4. 决定买什么并结账
+
+对战后可以继续说：
+
+> 加一份中薯条。 / 麦乐鸡改成两份。 / 再来一局。
+
+准备结账时说：
+
+> 就按当前清单下单，给我支付链接。
+
+Agent 推进付款人接受、固定清单和官方核价；用户确认具体门店、商品、数量、官方支持的取餐方式与最终金额后，才创建一次真实订单。已确认的同一有效方案不重复追问，报价变化则重新确认。创建成功后，只向付款人用户交付官方返回的链接。用户已验证通过官方链接或页面二维码可进入麦当劳 App，在购物车查看餐品，继续下单和支付；App 内的订单与支付操作由用户完成。
+
+如果订单已创建，索要链接不会再建一单；提交结果未知时先查单。仅说“开始”或参与辩论不构成下单、付款授权。
+
+## 当前验证范围
+
+截至 **2026-10-15（北京时间）**，服务版本 **0.6.4**，Skill 版本 **0.2.0**。
+
+| 内容 | 已验证范围 |
+| --- | --- |
+| 真实客户端 | 用户已用豆包 work 和 workbuddy 跑通手机端协作链路；新版 Skill 的四项反馈修正仍待手机端复测 |
+| 官方查询与核价 | 开发联调已实际调用门店搜索、菜单、单品详情与核价 |
+| 真实建单 | 开发联调已创建堂食／外带待支付订单各一份，并查询到待支付状态；不是模拟回执 |
+| 官方 App 交接 | 用户已验证官方链接／页面二维码可进入麦当劳 App，在购物车查看餐品并继续下单、支付；订单、支付与取餐状态以官方 App 为准 |
+| 房间与观战 | 公网 21 工具发现、创建／加入返回同一观战链接、网页 HTTP 200、5 秒等待、SSE、刷新与重连验证通过 |
+| 自动检查 | 113 项代码测试、strict 类型检查、Workers/Node 构建及两种运行环境的 390/1280 页面检查通过；12 项 Skill 行为场景为独立模拟检查 |
+
+本地 `fixture` 模式使用明确标注的测试资料与模拟交易；生产 `AGENT_REPORTED` 表示资料由 Agent 直连官方后上报，不能理解为模拟，也不代表后端独立核验了官方账户或支付结果。
+
+仍在优化客户端工具发现、持续轮询、链接原样交付和立场同步。模型裁判可能超时或返回不合规范的结果，失败会明确展示，不伪造胜者；裁判评分是娱乐性选餐参考，不保证绝对客观。当前只做固定门店的到店自取，堂食／外带按官方核价选项确认，尚未接入外卖配送或套餐定制。
+
+## 本地开发
+
+需要 Node.js **22.18+**、pnpm **10.28.2**；CI 与服务器使用 Node.js 22.23.3。以下命令只安装、检查和运行本地服务，不创建麦当劳订单。
 
 ```sh
-pnpm install
-pnpm run typecheck
+git clone https://github.com/PlonGuo/mcd-hackthon.git
+cd mcd-hackthon
+pnpm install --frozen-lockfile
 pnpm test
-pnpm run dev -- --var MCDEBATE_PUBLIC_ORIGIN:http://localhost:8787
-```
-
-打开 <http://localhost:8787/debug>。两个独立标签页可以模拟两个客户端；**此方式不替代真实双手机测试**。用直接打开的新标签页加入，避免浏览器“复制标签页”拷贝同一身份。
-
-```sh
-pnpm run smoke -- http://localhost:8787
-pnpm run smoke:mcp -- http://localhost:8787/mcp
-pnpm run smoke:watch -- http://localhost:8787
-pnpm run build
-```
-
-`smoke` 创建两个测试房间，验证两客户端流程、并发加入、并发发言重试、越权拒绝、增量读取及关闭。退出码非零表示失败。
-
-`build` 先做严格类型检查，再做打包和部署配置检查，不发布到 Cloudflare。生成的 `dist/` 和本地 `.wrangler/` 数据不会进入版本控制。
-
-## 普通服务器运行
-
-```sh
+pnpm run typecheck
 pnpm run build:node
-# 新服务器配置默认为 reported，裁判需要 DEEPSEEK_API_KEY。
-MCDEBATE_PUBLIC_ORIGIN=http://127.0.0.1:8870 JUDGE_ENABLED=false pnpm run start:node
+MCDEBATE_PUBLIC_ORIGIN=http://127.0.0.1:8870 SHOPPING_DATA_MODE=fixture JUDGE_ENABLED=false node dist/node/server.mjs
 ```
 
-服务器运行代码集中在 `src/runtime/node/`，公共接口在 `src/runtime/types.ts`；业务规则仍在现有房间与 `shopping/` 模块。`dist/node/server.mjs` 是部署时生成的 JavaScript 构建产物，源码继续使用 TypeScript。生产环境通过 systemd 启动并独立保存数据，见[部署说明](deploy/README.md)。
+健康检查：`http://127.0.0.1:8870/health`；本地 MCP：`http://127.0.0.1:8870/mcp`。服务仅监听本机；手机验收使用公网服务或自行部署的 HTTPS 地址。关闭裁判时可验证房间、页面和模拟结账，裁判会明确显示未配置，不生成虚假胜负。
 
-## 持续点餐与模型开发验收
+需要完整模型裁判时，在不存在 `.dev.vars` 的情况下从 [示例](.dev.vars.example) 创建私密配置，填写 `DEEPSEEK_API_KEY`；已有文件只补充，不覆盖。默认模型为代码配置的 `deepseek-flash`，关闭思考模式。在另一轮启动中使用：
 
 ```sh
-pnpm run dev:shopping
-# 另一终端，读取已经配置的 .dev.vars
-pnpm run demo:model -- http://localhost:8790/mcp
-pnpm run check:shopping-ui
+MCDEBATE_PUBLIC_ORIGIN=http://127.0.0.1:8870 SHOPPING_DATA_MODE=fixture JUDGE_ENABLED=true node --env-file=.dev.vars dist/node/server.mjs
 ```
 
-`create_room` 增加 `mode:"shopping"` 才进入持续点餐；省略时仍为原纯辩论模式。Room、独立Battle与持续OrderDraft分别管理。购物模式准备/开局/发言携带battle_id；清单写入携带expected_draft_version/event_id。网页只读，判决后继续订阅SSE。目前共21个MCP工具，包括下述7个结账工具。
+裁判和模型开发测试会调用真实模型 API、消耗账户额度；`pnpm test` 不需要模型或麦当劳 Token。服务器不需要保存麦当劳账户 Token，官方业务由用户的客户端直连。
 
-在已有 `.dev.vars` 私密配置 `DEEPSEEK_API_KEY`，默认 `MODEL_PROVIDER=deepseek`、`DEEPSEEK_MODEL=deepseek-flash`；两个开发辩手与后端裁判共用配置，关闭思考模式。缺少DeepSeek密钥明确失败，不自动回落OpenAI。已有OpenAI Key可保留，只有显式选择 `MODEL_PROVIDER=openai` 才会使用。不要覆盖已有密钥或展示环境文件；生产规则和金额计算由代码执行。
-
-点餐操作由确定性测试场景经MCP执行；两个模型使用独立历史与凭证，各自生成发言并实际调用submit_argument，裁判由后端独立调用。用户确认由场景模拟，不称为模型自主规划点餐、真人确认或豆包/WorkBuddy验收。已真实验证“锁店→先点餐→第一局中改单→采纳建议→第二局”：最新DeepSeek回归12次模型请求、两次有效判决、3行清单、27次SSE，用时24.119秒；其中两次工具参数拒绝后，经有限修正成功。结果只保留公开房间数据，不保存玩家凭证。模型请求有步数/超时上限，临时429/503最多重试两次；裁判每局仍最多请求一次。固定测试资料不代表官方菜单或报价。
-
-以下仅供显式使用OpenAI的历史调试：当本机OpenAI出站依赖代理时，只给测试进程设置已有代理。Node 22.22可通过 `NODE_OPTIONS=--use-env-proxy` 和 `HTTPS_PROXY` 使用它。普通Wrangler/workerd的出站与Node不同；`pnpm run test:server` 使用官方Wrangler Test Harness运行同一Worker和DO，模型出站沿用Node代理，控制台显示临时端口，`demo:model`传该端口。此测试环境数据临时保存在内存，不能当生产部署或重启持久化验收。
-
-`check:shopping-ui` 通过Playwright在390px与1280px检查真实SSE、清单、历史、自动滚动、刷新恢复及纯文本显示；首次缺浏览器时运行 `pnpm exec playwright install chromium`。后端和脚本由strict TypeScript检查；测试文件也已迁为.ts，使用Node测试运行器执行。
-
-## 本地结账验收
-
-已有购物服务运行于8790时执行；不需要麦当劳Token，也不调用模型或真实交易接口：
+本地页面检查（保留上面的 fixture 服务，另一终端执行）：
 
 ```sh
-pnpm run smoke:checkout -- http://localhost:8790/mcp
-pnpm run check:checkout-ui
+pnpm exec playwright install chromium
+BASE_URL=http://127.0.0.1:8870 pnpm run check:shopping-ui
+BASE_URL=http://127.0.0.1:8870 pnpm run check:checkout-ui
 ```
 
-新增工具：`nominate_payer / accept_payer_role / prepare_checkout / get_checkout_package / report_checkout / cancel_checkout / simulate_checkout`。
+也可使用原有 Workers 开发入口 `pnpm run dev:shopping`（默认 8790）。`pnpm run build` 只做类型检查和 Workers 部署 dry-run，`pnpm run build:node` 生成 Node 构建文件；两者不发布服务。独立模型测试、官方只读联调及真实建单工具的边界见 [MCP_INTEGRATION.md](MCP_INTEGRATION.md)。
 
-房主提名付款人→候选本人接受→房主按当前清单版本准备结账→付款人领取固定门店和清单→核价→用户核对完整方案与最终金额→报告SUBMITTING后仅创建一次订单→查询确认→用户在官方页面付款。准备结账要求非空清单、无当前对战；期间冻结改单、新局和付款人。取消未领取方案或核实未下单后恢复点餐，已经创建的订单不能当草稿继续改。
-
-所有 `report_checkout` 携带查询发起时的 `expected_checkout_version`；旧版本结果拒绝，不能把旧查询套上新版本。核价有效期3分钟，提交需对应 `quote_id` 和 `expected_total_cents`，60秒提交失联转UNKNOWN。UNKNOWN保持锁定，先查单，不能盲目重下。房间关闭/过期不取消官方订单；付款人仍可在房间过期后24小时内报告既有结果，不能重新核价或创建。观战链接按原30分钟结束。
-
-默认 `SHOPPING_DATA_MODE=fixture`：模拟核价、创建、查单和付款均由 `simulate_checkout` 完成；`abandon` 放弃尚未提交的模拟结账，`create` 支持拒绝/超时但已创建/超时且未创建故障情景。页面始终显示“模拟订单”“模拟付款”，不扣钱。真实模式仅接收 `AGENT_REPORTED`，这不证明真人已审批或官方已付款；真实创建仍由付款人的官方MCP客户端执行，支付链接、官方订单号和账户凭证不进入公共房间。
-
-本地已通过21工具发现、两套MCP身份、9阶段/19次SSE、390px与1280px页面检查及105项测试。证据在 `.superpowers/sdd/2026-10-15-checkout/`；这不是官方下单/支付验收，也不是用户真人确认。
-
-对齐官方接口时，在已有 `.dev.vars` 私密追加 `MCD_MCP_TOKEN`，运行 `pnpm run probe:mcd`。脚本固定连接 `https://mcp.mcd.cn`，只握手和读取8个相关工具的定义，业务调用为0；不会核价、创建/取消订单或付款。定义保存至证据目录。2026-10-15已通过官方只读联调，门店1450601、麦乐鸡5块和中薯条各1，核价2750分；未调用官方写工具。没有公开沙箱资料时，不把官方接口当模拟接口。不要覆盖已有环境文件或把Token发到聊天。
-
-## 官方只读联调（不创建订单）
-
-官方Token已配置后，可用独立8791环境显示Agent上报的真实商品与核价，避免混入8790测试来源房间。首个命令在独立终端运行：
-
-```sh
-pnpm run dev:official-readonly
-pnpm run demo:mcd-readonly --city 上海 --keyword 虹口四川北路 --store 1450601 --products 1401,4810
-```
-
-门店编号必须是用户从官方搜索中确认的门店；脚本核对搜索结果，查询菜单与两个单品详情，再用冻结清单调用calculate-price。仅支持默认、无套餐/特制的单品；其它结构明确拒绝，不猜组合。菜单currentPrice为元字符串，核价price为整数分，分别校验转换。真实提交还必须从官方takeWayList选择堂食或外带，不能自行填写默认值。
-
-脚本只开放门店/菜单/详情/核价四项只读工具，拒绝下单、取消、领券和历史账户查询；本地流程停在QUOTED。使用一个官方账户及两套本地测试身份，不声称两个真实用户、真人消费授权或客户端验收。生成official-readonly-result.json及390/1280截图，只保留白名单；房间仍标AGENT_REPORTED，不能宣称后端独立验证。后续真实下单须再次核价、展示具体订单并取得明确确认；用户自行在官方页面付款。
-
-## 真实建单客户端（0.6.0）
-
-`mcd:order` 在付款人本地直连官方MCP，公共房间不代理官方账户。已实现重新核价、单次创建、保留官方支付链接、查单与取消状态同步；用户自行付款。2026-10-15按用户选择分别真实创建盛邦店外带/堂食订单，各含麦乐鸡5块＋中薯条各1，均¥27.50；官方查单均“待支付”。用户已确认本阶段验收通过：iAgent负责建单并返回官方支付链接，后续支付交给麦当劳App；不要求真实扣款或取餐，不重复建单。
-
-已有 `.dev.vars` 的 `MCD_MCP_TOKEN` 继续使用。先运行 `pnpm run dev:official-readonly`，再由执行方按用户确认的城市、关键词、门店、商品和方式运行 `pnpm run mcd:order --operation prepare`（参数为 `--city/--keyword/--store/--products/--take-way`）。prepare只读官方数据并生成3分钟有效的私密方案。展示完整方案后，submit必须同时提供 `--plan` 文件和匹配的 `--confirm-plan` 摘要；query只需 `--plan`。不要把旧方案或样本当作消费授权。
-
-方案、付款人房间凭证与官方回执仅写入 `.local/mcd-order/`（目录0700、文件0600），不得提交、分享或截图。每单SQLite记录在网络请求前占位，同一checkout重启后也拒绝再次创建；建单进程存活时查单不能覆盖回执，进程退出后仅核对。超时/错误/空历史保持UNKNOWN，不自动重下。官方未提供幂等键，不能承诺网络层恰好一次；丢失订单号的未知结果仍需付款人核对官方记录。
-
-官方取消后报告ORDER_CANCELLED，单独显示；不冒充未下单或退款完成。客户端没有付款/取消调用。`pnpm run check:order-ui` 在8791用**模拟官方回执**检查真实HTTP/MCP、SSE与390/1280页面，不调用麦当劳、不扣款，不能当真实支付通过。当前105项测试、strict与build通过；真实建单两单、查询待支付及两单390/1280页面均已通过，支付与取餐交给麦当劳App，按用户确认不再列为Demo验收项。
-
-## 公网 HTTP 与可选手机验收
-
-准备好部署时，在你自己的 Cloudflare 账户操作：
-
-```sh
-pnpm exec wrangler login
-pnpm run deploy
-pnpm run smoke -- https://你的实际地址.workers.dev
-```
-
-1. 两台手机分别打开实际公网地址的 `/debug`。
-2. A 创建两人房间，只分享房间号；B 用自己的名称加入。
-3. 两人点“准备”，A 点“房主开局”。
-4. 依次发送 A → B → A → B 四条观点，新两人四条 Demo 的回合掉线兜底 120 秒。
-5. 检查两边顺序一致、非当前玩家不能发言、B 不能启动或关闭房间。
-6. 刷新页面，检查本人身份和房间记录恢复。
-7. 用中国大陆实际手机网络测试可达性和延迟，把证据与 URL 写入 CURRENT_STATUS。
-
-2026-10-13 已发布 HTTP 房间服务：<https://mcdebate-room-poc.jason-ghzr.workers.dev>，公网 HTTP smoke 通过。用户决定本阶段先验收两个桌面 Agent；上述双手机和大陆无 VPN 网络测试后补。新增 `/mcp` 已发布到同一地址并通过公网检查。
-
-## 最小房间 MCP（本地与公网已验证）
-
-本地地址 `http://localhost:8787/mcp`，公网地址 `https://mcdebate-room-poc.jason-ghzr.workers.dev/mcp`，采用 Streamable HTTP；复用当前 HTTP 房间和 Durable Object。线上0.3.1仍有七工具，本地0.6.1有21工具。原工具为 `create_room / join_room / set_ready / start_debate / get_room_state / submit_argument / close_room`。
-
-创建/加入返回本人的 `player_token`，后续工具参数显式携带它；连接时不使用 Cloudflare 或麦当劳账户 Token。状态返回 `next_action / next_request / allowed_actions`，模板不含凭证，需要客户端加入自己的凭证。等待传 `wait_ms=2000`，读取完整消息用 `since=0`。工具仍由服务端验证权限、回合和重试。
-
-只读状态和模板不广播凭证；创建/加入的私密结果及后续工具参数仍会被当前宿主看到。注册结果未知时停止，不自动重试占席。公网仍是小范围 POC，没有生产限流、正式注册恢复或数据清理。
-
-仓库提供 [mcdebate Skill](skills/mcdebate/SKILL.md)：手动选择技能后说“开始”，默认创建购物房间并逐项收集信息；加入、续接、持续清单和多局对战使用同一技能。结账细节按需读取技能中的 references/checkout.md。技能须配合已连接的 MCP，不能自行保证客户端预加载或持续执行。豆包与 WorkBuddy 的配置、启动指令和反馈步骤见本地 [AGENT_START](docs/AGENT_START.md)；其中公网 MCP 配置已可用于接入验证。脚本中的固定观点是测试数据，不代表真实 Agent 已自动交锋。
-
-## HTTP 接口
-
-所有响应都禁止缓存。成功格式为 `{ "ok": true, "data": ... }`；错误包含 `code`、`message`、`expected_action`、`retryable`。
-
-| 方法 | 路径 | 参数与权限 |
-|---|---|---|
-| GET | `/health` | 无认证，返回服务标识 |
-| GET | `/debug` | 同源调试页面 |
-| POST | `/rooms` | `name`、`topic`；可选 `expected_players`（默认 2）、`max_turns`（默认 4）、`agent_label` |
-| POST | `/rooms/:id/join` | `name`、可选 `agent_label`；仅等待阶段且有空位 |
-| POST | `/rooms/:id/ready` | `ready: boolean`；本人凭证 |
-| POST | `/rooms/:id/start` | `{}`；仅房主、全员 Ready 且近期在线 |
-| GET | `/rooms/:id/state?since=N` | 本人凭证；游标默认为 0 |
-| POST | `/rooms/:id/say` | `turn_id`、`event_id`、`text`；当前玩家 |
-| POST | `/rooms/:id/close` | `{}`；仅房主 |
-
-POST 请求使用 `Content-Type: application/json`，最大 16 KiB。名称最多 40 字，辩题和发言最多 200 字。不支持的字段和错误类型会被拒绝。
-
-新版本创建/加入成功返回 `data.room`、`data.player_id`、`data.player_token` 和同一 `data.watch_url`。后续请求携带：
+## 实现与部署
 
 ```text
-Authorization: Bearer <你自己的 player_token>
+skills/mcdebate/       当前技能指令与按需读取的结账参考
+skill-releases/       每次交付的版本快照、变更说明和平台导入包
+src/mcp.ts            自建21个工具及MCP接入
+src/shopping/         点餐草稿、多局对战、候选归属和结账状态
+src/runtime/node/     Node运行时、SQLite持久化与超时任务
+src/room-object.ts    房间控制器；Node和Workers复用业务规则
+src/watch-page.ts     只读观战网页
+scripts/lib/          官方查询/核价与真实建单适配
+scripts/              开发测试、界面检查和显式联调入口
+test/                 自动化测试
+deploy/               服务器、Nginx、证书与发布说明
 ```
 
-这不是麦当劳账户 Token。其他成员不能看到你的凭证，服务器只存储 SHA-256 摘要。房间号是加入邀请，不能当成玩家身份。
+后端源码使用 TypeScript，MCP SDK 处理协议；普通服务器运行 Node.js + SQLite，Nginx 提供 HTTPS 与 SSE。Cloudflare Workers / Durable Objects 入口保留用于本地开发和可选部署。观战流推送已提交的完整发言，不是外部 Agent 内部逐字生成过程。
 
-`state` 总是返回当前房间信息，`arguments` 和 `events` 只返回 `sequence` 游标之后的增量。拿到最新 `data.room.sequence` 后作为下一次 `since`；要恢复完整记录时使用 `since=0`。
+日常通过分支和 PR 修改；GitHub Actions 检查通过后，`main` 的同一提交才部署到服务器，健康检查失败回退旧版本。业务密钥、真实订单记录和运行数据不进入仓库。部署细节见 [deploy/README.md](deploy/README.md)。当前为单机创意 Demo，尚未按商业服务规模验收负载与长期可用性。
 
-发言读取当前 `current_turn.turn_id`，生成唯一 `event_id`。网络失败重试时保留原事件 ID、回合 ID 和文本。相同内容只记录一次，冲突事件返回 `EVENT_CONFLICT`；最后一条发言结束后仍可重试确认。
+每次 Skill 交付在 [版本归档](skill-releases/README.md) 新增版本，历史版本不覆盖；当前源文件位于 `skills/mcdebate/`。
 
-## POC 状态与限制
+## 参赛材料
 
-```text
-WAITING → READY → ACTIVE → FINISHED
-                   └── 回合超时 → PAUSED
-房主可关闭 → CLOSED；创建 30 分钟后 → EXPIRED
-```
+本仓库参与 [麦当劳程序员创意开发大赛](https://github.com/M-China/mcd-developer-innovation-challenge)。根目录提供比赛要求的 `README.md`、官方原样 `CONTEST_DECLARATION.md`、`MCP_INTEGRATION.md` 和项目源码；报名内容分别位于 `ISSUE_TITLE.txt`、`ISSUE_BODY.md`，供 review 后使用。
 
-- 2–4 人，2–12 条发言，按加入顺序轮流发言。这里只验证通信，不代表正式两位辩手的比赛编排。
-- 全员最近 30 秒内有有效活动才允许开局；调试页每 2 秒轮询。
-- Durable Object Alarm 和请求时检查共同执行回合超时/房间过期；暂停不能恢复，要新建测试房间。
-- SQLite-backed Durable Object 保存房间；本地开发数据位于 `.wrangler/`，重启开发服务后仍可读取。
-- 调试页凭证保存在当前标签页 `sessionStorage`；刷新可恢复，关闭标签页后可能丢失。创建/加入请求本身尚不支持凭证恢复。
-- 本 POC 没有公网资源限流、正式身份注册、过期数据清理或生产审计；过期后停止操作，但数据尚未自动删除。适合小范围验证。
-- 仅浏览器通信成功不能证明手机 Agent 可以持续自动轮询。POC 2 必须单独验证。
+`CONTEST_DECLARATION.md` 取自[官方原文](https://github.com/M-China/mcd-developer-innovation-challenge/blob/f50c8c8fa50516123ef6e5f8710d1ed72d563472/CONTEST_DECLARATION.md)，已逐字节核对，未改写。报名正文使用官方要求的字段格式：项目地址为裸链接，每个字段的标签与内容在同一行。[官方提交要求](https://github.com/M-China/mcd-developer-innovation-challenge#开发-skill)
 
-## 文件结构
-
-```text
-src/core.ts          房间规则、权限、时间和脱敏快照
-src/http.ts          JSON 校验、认证和响应
-src/room-service.ts  HTTP/MCP 共用房间路由和固定动作映射
-src/mcp.ts           21个 MCP 工具、协议入口和等待/错误处理
-src/shopping/        持续清单、多局对战与结账规则
-src/agent-view.ts    当前玩家的下一步提示和稳定发言模板
-src/index.ts         Worker 路由及 Durable Object 持久化
-src/debug-page.ts    浏览器调试页、同源脚本和样式
-test/                Node 内置测试
-scripts/smoke.ts     实际 HTTP 冒烟测试
-scripts/mcp-smoke.ts 实际 MCP 协议与两客户端集成检查
-skills/mcdebate/      点餐对战 Skill
-wrangler.jsonc       Cloudflare 本地/部署配置
-.vscode/mcp.json     VS Code 的官方麦当劳 MCP 输入提示配置
-mcp-config.example.json  通用 MCP 脱敏示例
-docs/                本地 PRD、持续交接记录与 MCP 集成说明（Git 忽略）
-```
-
-## MCP 配置与后续
-
-POC 1 不使用上述麦当劳 MCP 配置。其凭证和宿主差异见本地 [MCP 集成说明](docs/MCP_INTEGRATION.md)。不要把真实 Token 写进仓库。
-
-Cloudflare 配置按 [SQLite-backed Durable Object 官方文档](https://developers.cloudflare.com/durable-objects/reference/durable-objects-migrations/) 使用 `exports` 声明。
-
-下一阶段须先证明两个真实 Agent 能连续自动回应，再接只读麦当劳事实、独立裁判、多 Topic 和共享草稿。真实 `create-order` 只能在指定付款人明确确认后进行。当前尚未补齐完整参赛材料，尤其官方原样 `CONTEST_DECLARATION.md` 需要在正式参赛准备时获取。
-
-`docs/MCP_INTEGRATION.md` 当前是本地研发记录。正式参赛前须整理并导出一份脱敏、描述实际实现的公开 `MCP_INTEGRATION.md`，按届时核对的比赛要求发布；本地忽略的文件不算已经交付。此次没有创建公开副本或发布仓库。
-
-## 观战与 DeepSeek 裁判（新版本已发布）
-
-新 MCP Demo 固定两人、四条发言。create/join 返回只读 watch_url；观众不占玩家席位，也不更新玩家在线时间。网页通过 SSE 展示已提交的完整发言，中途进入/重新连接加载完整记录；不会取得宿主模型内部逐字输出。
-
-首次运行可复制 `.dev.vars.example` 为 `.dev.vars` 并填入 `DEEPSEEK_API_KEY`，不要把密钥发到聊天或提交。已存在的 `.dev.vars` 不要覆盖。Cloudflare 官方支持该文件作为本地私密配置。当前默认DeepSeek deepseek-flash且关闭思考；裁判每局只调用一次，最大预算60秒，结构校验后计算总分与胜者。没有密钥或模型失败时显示失败，不虚构判决。
-
-`FINISHED` 只表示发言封存；`judgement.status=PENDING` 继续等待，`SUCCEEDED` 包含真实评分，`FAILED` 只有脱敏失败码。页面不把模型判决描述为绝对客观。高分者胜；同分由裁判在同一次评分中给出唯一胜者与决胜理由，保留原始分数。观战页新增消息/判决时自动滚动，当前回合显示等待点动画；重复快照不重复滚动，断线/暂停/结束隐藏等待动画。
-
-本地检查会创建测试房间；开启裁判且配置真实密钥时，两人四条流程会调用真实API并消耗账户额度。仅验证房间通信时启动 `pnpm exec wrangler dev --port 8787 --var MCDEBATE_PUBLIC_ORIGIN:http://localhost:8787 --var JUDGE_ENABLED:false`；真实裁判需去掉该覆盖项。公网发布前另外配置同名 Cloudflare Secret，本地密钥不会自动成为线上 Secret。
-
-当前购物开发预览使用 http://localhost:8790（模型代理测试环境使用控制台给出的临时端口）；公网服务已升级至0.3.1。观战链接有效期与房间一致，当前30分钟。持链接者可以看公开对局；玩家token、账户Token、地址与支付信息不进入观众视图。
-
-2026-10-14 用户报告手机关闭 VPN/Wi-Fi 后蜂窝网络访问公网 `/health` 超时。当前 `workers.dev` 地址的该条直连验收失败；公网开发侧检查不能冒充大陆无 VPN 可用性。自有域名复测或国内部署评估见 `docs/CURRENT_STATUS.md`。
-
-本地源码0.3.2已关闭裁判默认长推理，修复真实调用偶发输出截断；50项测试与一次真实同分决胜回归（60/60，唯一胜者）通过。线上仍为0.3.1，本项修复按用户“部署最后处理”的指令留待统一发布。
-
-本地最新0.3.3：用户已确认自动滚动/等待点正常。实时测试暴露裁判分数与条件式决胜不一致导致非法结果；现改为模型始终给备用decision，服务端计算总分并仅在同分时采用。原失败局保留，新局同一输入真实复测72/73、唯一胜者与SSE通过，52测试与构建通过。线上仍0.3.1，按用户要求到最后统一部署。
+`workbuddy.md` 是 WorkBuddy 专项奖励要求的真实开发对话材料，本轮未提供该文件，不把 WorkBuddy 作为客户端参与对战等同于使用其开发 Skill，也不编造开发记录。若申请该项奖励，需另行导出并审阅真实记录。配置、截图和提交材料不要包含真实凭证、支付链接或个人信息。`docs/` 为本地研发记录，按项目约定不发布；公开使用说明以根目录文档为准。

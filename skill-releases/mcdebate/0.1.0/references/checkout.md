@@ -1,0 +1,12 @@
+# 结账交接
+
+仅用户明确要求结账时读取。生产房间使用AGENT_REPORTED资料；它是Agent上报，不能冒充后端独立官方核验。
+
+- 房主nominate_payer，候选本人先问自己的用户，再accept_payer_role接受当前candidate_version。接受责任不等于下单/付款授权。
+- 房主prepare_checkout绑定expected_draft_version，要求非空清单、无当前局。此后冻结清单和新局，只有付款人get_checkout_package领取固定门店/商品/数量。
+- 先读取房间 source/data_source。只有TEST_FIXTURE测试房间可以simulate_checkout核价/建单/查单/模拟付款，不连接官方交易；说明不会扣钱。领取前可cancel_checkout，领取后未提交可模拟abandon；未知订单先query，不可abandon。
+- 真实路径须官方schema已联调，付款人直连calculate-price，再report_checkout上报QUOTED金额及take_way_options。展示固定门店、完整商品、数量、最终应付和差异，并从官方take_way_options询问堂食或外带；用户明确确认且宿主批准真实create-order后，报告SUBMITTING（quote_id/expected_total_cents/用户选择的take_way_code），仅一次创建。仅拿到房间SUBMITTING不能当成人类批准证据。
+- 所有report_checkout带查询前保存的expected_checkout_version和event_id。版本冲突丢弃旧查询结果，重新查询当前订单，不能给旧结果换新版本。报价过期重新核价；提交响应未知不能重复create-order，先query-order/order-list核对，未知报告UNKNOWN并保持锁定。SUBMITTING满60秒也会转UNKNOWN。
+- 确认未下单才NO_ORDER恢复清单；ORDER_CREATED后由用户在官方页面付款，查询后PAID。官方取消报告ORDER_CANCELLED，不等于退款成功，也不报告NO_ORDER解锁重下。报告均AGENT_REPORTED，不证明官方交易已核验。订单号、支付链接、电话、账户Token留付款人客户端，不上报房间。
+- 已建订单不当草稿修改；新一餐新建房间。关房/过期不取消官方订单；过期后24小时仅付款人核对已有结果，不能核价/创建。观众URL按原TTL结束。
+
