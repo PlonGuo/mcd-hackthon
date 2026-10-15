@@ -79,3 +79,30 @@ test('MCP 拒绝超限请求和不受信任 Origin/Host', async () => {
   assert.match(initialized,/watch_url/,'初始化指引应要求展示观战链接');
   assert.match(initialized,/PENDING/,'发言结束后仍需等待真实裁判');
 });
+
+async function discovery(method,params={}) {
+  const response=await handleMcpRequest(new Request('http://localhost:8787/mcp',{method:'POST',headers:{
+    Host:'localhost:8787','Content-Type':'application/json',Accept:'application/json, text/event-stream','MCP-Protocol-Version':'2025-06-18'},
+    body:JSON.stringify({jsonrpc:'2.0',id:1,method,params})}),fakeEnv());
+  assert.equal(response.status,200);
+  const text=await response.text();
+  return JSON.parse(response.headers.get('content-type')?.includes('text/event-stream')?text.split('\n').find(s=>s.startsWith('data: ')).slice(6):text).result;
+}
+
+test('MCP 初始化以小写 mcdebate 暴露名称和短口令入口',async()=>{
+  const init=await discovery('initialize',{protocolVersion:'2025-06-18',capabilities:{},clientInfo:{name:'discovery-test',version:'1'}});
+  assert.equal(init.serverInfo.name,'mcdebate');assert.equal(init.serverInfo.title,'mcdebate');
+  assert.ok(init.instructions.startsWith('mcdebate'));
+  assert.match(init.instructions,/mcdebate 开始/);
+});
+
+test('工具发现保留21个兼容名称，提供 mcdebate 标题并区分新房间和已有房间开局',async()=>{
+  const result=await discovery('tools/list');assert.equal(result.tools.length,21);
+  for(const tool of result.tools){assert.match(tool.name,/^[a-z_]+$/);assert.ok(tool.title.startsWith('mcdebate'));assert.ok(tool.description.includes('mcdebate'));}
+  const byName=Object.fromEntries(result.tools.map(t=>[t.name,t]));
+  assert.equal(byName.create_room.title,'mcdebate 开始');
+  assert.match(byName.create_room.description,/mcdebate 开始/);
+  assert.match(byName.create_room.description,/mode=shopping/);
+  assert.match(byName.create_battle.description,/已有/);
+  assert.match(byName.join_room.description,/房间号/);
+});

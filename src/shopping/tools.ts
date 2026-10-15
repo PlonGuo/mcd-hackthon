@@ -4,7 +4,7 @@ export const shoppingDefinitions={
   set_room_context:{action:'context',description:'仅房主在用户明确选择后锁定门店，一经确定不可更换；地点不含私人住址。',schema:schemas.context},
   report_item:{action:'item',description:'上报自己查询的单品摘要与参考报价；服务端填写来源与报告者。开发资料须标明测试。',schema:schemas.item},
   update_order_draft:{action:'draft',description:'编辑待买清单。add须item_id、owner和quantity；set_quantity须line_id和quantity；remove只须line_id。须最新expected_draft_version和唯一event_id，不等于下单。',schema:schemas.draft},
-  create_battle:{action:'battle',description:'双方入房锁店后发起一局；完成或取消当前局才能再创建。使用唯一event_id。',schema:schemas.battle},
+  create_battle:{action:'battle',description:'在已有 mcdebate 购物房间中，用户说“开始对战”“再来一局”时发起新局，不重复创建购物房间。须双方入房并已确认门店；完成或取消当前局才能再创建。使用唯一event_id。',schema:schemas.battle},
   cancel_battle:{action:'cancel',description:'任一辩手可以取消本局，保留清单和历史。',schema:schemas.cancel},
   resolve_recommendation:{action:'recommendation',description:'仅房主按用户明确答复采纳或忽略建议；采纳须数量，不自动删除输方商品。',schema:schemas.recommendation},
   nominate_payer:{action:'payer-nominate',description:'房主提名本房间付款人；提名不等于接受或付款授权，须候选本人调用accept_payer_role。',schema:checkoutSchemas.nominate},
