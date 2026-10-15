@@ -1,0 +1,52 @@
+{
+  "name": "mcdebate-room-poc",
+  "version": "0.6.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "packageManager": "pnpm@10.28.2",
+  "scripts": {
+    "dev": "wrangler dev",
+    "build": "pnpm run typecheck && wrangler deploy --dry-run --outdir dist",
+    "deploy": "pnpm run typecheck && wrangler deploy",
+    "test": "node --test test/*.test.ts",
+    "smoke": "node scripts/smoke.ts",
+    "smoke:mcp": "node scripts/mcp-smoke.ts",
+    "smoke:watch": "node scripts/watch-smoke.ts",
+    "typecheck": "tsc --noEmit",
+    "demo:model": "node --env-file=.dev.vars scripts/model-demo.ts",
+    "check:shopping-ui": "node scripts/shopping-ui-check.ts",
+    "smoke:checkout": "node scripts/checkout-smoke.ts",
+    "check:checkout-ui": "node scripts/checkout-ui-check.ts",
+    "probe:mcd": "node --env-file=.dev.vars scripts/mcd-schema-probe.ts",
+    "demo:mcd-readonly": "node --env-file=.dev.vars scripts/mcd-readonly-demo.ts",
+    "mcd:order": "node --env-file=.dev.vars scripts/mcd-order.ts",
+    "types": "wrangler types --strict-vars false",
+    "dev:shopping": "wrangler dev --port 8790 --inspector-port 9230 --persist-to .wrangler/state-shopping --var MCDEBATE_PUBLIC_ORIGIN:http://localhost:8790",
+    "dev:official-readonly": "wrangler dev --port 8791 --inspector-port 9231 --persist-to .wrangler/state-official-readonly --var MCDEBATE_PUBLIC_ORIGIN:http://localhost:8791 --var SHOPPING_DATA_MODE:reported --var JUDGE_ENABLED:false",
+    "test:server": "node scripts/test-server.ts",
+    "check:order-ui": "node scripts/order-ui-check.ts",
+    "check:publish": "node --env-file-if-exists=.dev.vars scripts/check-publish-safety.ts"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/client": "2.0.0",
+    "@types/node": "^22.20.5",
+    "playwright": "1.58.2",
+    "typescript": "^7.0.2",
+    "wrangler": "4.149.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "workerd"
+    ]
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "@modelcontextprotocol/server": "2.0.0",
+    "agents": "0.28.0",
+    "zod": "4.6.7"
+  }
+}

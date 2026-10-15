@@ -1,0 +1,10 @@
+# 本地开发，复制到 .dev.vars 并填写密钥；不要提交或发到聊天
+DEEPSEEK_API_KEY=
+
+# 开发期默认OpenAI，已有DeepSeek密钥无需删除。
+MODEL_PROVIDER=openai
+OPENAI_API_KEY=
+OPENAI_MODEL=gpt-5-nano
+
+# 可选：官方MCP接口联调（真实建单需用户明确确认）。与OpenAI密钥不同，不要发到聊天。
+MCD_MCP_TOKEN=

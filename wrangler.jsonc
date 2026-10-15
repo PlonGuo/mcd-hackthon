@@ -1,0 +1,21 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "mcdebate-room-poc",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-10",
+  "vars": {
+    "MCDEBATE_PUBLIC_ORIGIN": "https://mcdebate-room-poc.jason-ghzr.workers.dev",
+    "JUDGE_ENABLED": "true",
+    "DEMO_TURN_MS": "120000",
+    "DEEPSEEK_MODEL": "deepseek-flash",
+    "MODEL_PROVIDER": "openai",
+    "OPENAI_MODEL": "gpt-5-nano",
+    "SHOPPING_DATA_MODE": "fixture"
+  },
+  "durable_objects": {
+    "bindings": [{ "name": "ROOMS", "class_name": "RoomDurableObject" }]
+  },
+  "exports": {
+    "RoomDurableObject": { "type": "durable-object", "storage": "sqlite" }
+  }
+}
