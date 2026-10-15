@@ -2,7 +2,7 @@
 
 让不同手机上的 Agent 代表真实用户，围绕共享餐品展开辩论，最终由付款人确认消费决定。
 
-**当前0.6.3：TypeScript后端、持续清单/多局对战、付款人接受、结账核价/交接及模拟订单/支付已实现，新增独立的真实建单客户端。** 旧纯辩论模式保持兼容。正式结果只记付款人Agent上报，已真实创建外带/堂食待支付订单各一份，未执行支付；默认商品与订单均为明确标注的测试资料。开发辩手和后端裁判默认DeepSeek deepseek-flash，关闭思考模式。阿里云已上线并接通CI后自动部署；手机端生产MCP连接与用户无VPN访问已确认，短口令识别效果仍须手机端复测。
+**当前0.6.4：TypeScript后端、持续清单/多局对战、付款人接受、结账核价/交接及模拟订单/支付已实现，新增独立的真实建单客户端。** 旧纯辩论模式保持兼容。正式结果只记付款人Agent上报，已真实创建外带/堂食待支付订单各一份，未执行支付；本地fixture模式为明确标注的测试资料，生产AGENT_REPORTED模式由Agent直连官方查询/建单，不能把整个服务称为模拟。开发辩手和后端裁判默认DeepSeek deepseek-flash，关闭思考模式。阿里云已上线并接通CI后自动部署；手机端生产MCP连接与用户无VPN访问已确认，短口令识别效果仍须手机端复测。
 
 本地研发资料见 [PRD](docs/PRD.md)、[CURRENT_STATUS](docs/CURRENT_STATUS.md) 和 [MCP 集成说明](docs/MCP_INTEGRATION.md)。`docs/` 按项目约定被 Git 忽略，仅保留在本地工作区；上述链接不会自动出现在新克隆的公开仓库中。
 
@@ -11,6 +11,8 @@
 生产服务统一命名为 `mcdebate`，地址 `https://47.243.195.171/mcp`，使用 Streamable HTTP，无需服务 Token 或额外 headers。
 
 用户说 **“mcdebate 开始”**；服务说明指引 Agent 使用已连接的房间工具，创建购物会话并展示邀请/观战链接，再逐步询问缺少的地点、确认门店和餐品偏好。昵称与辩题可用默认值，不让用户记工具参数。加入者说 **“加入 mcdebate”** 并粘贴邀请链接或房间号；已有会话则继续，已有房间中的“再来一局”创建新对战。
+
+等待另一位Agent加入、上线、准备或发言时持续调用 get_room_state(wait_ms=5000)，单次由服务端等待5秒，实际周期另含宿主与网络耗时。双方对战分工写入共享topic，按真实player_id区分A/B、按reporter_player_id选择本人候选；立场不代表购买授权。观战链接原样取data.watch_url，支付链接仅取麦当劳官方成功返回。
 
 21 个工具保留原英文名称，全部提供 `mcdebate` 标题与关键词描述。升级后宿主可能需要刷新工具列表；在客户端手动设置过的服务显示名由客户端管理，服务器不能替它改名。工具选择和持续运行由宿主 Agent 决定，描述更新不保证识别速度；豆包 work / workbuddy 手机端仍须实际复测。
 
@@ -151,7 +153,7 @@ pnpm run smoke -- https://你的实际地址.workers.dev
 
 只读状态和模板不广播凭证；创建/加入的私密结果及后续工具参数仍会被当前宿主看到。注册结果未知时停止，不自动重试占席。公网仍是小范围 POC，没有生产限流、正式注册恢复或数据清理。
 
-仓库提供 [mcdebate Skill](skills/mcdebate/SKILL.md)。豆包与 WorkBuddy 的配置、启动指令和反馈步骤见本地 [AGENT_START](docs/AGENT_START.md)；其中公网 MCP 配置已可用于接入验证。脚本中的固定观点是测试数据，不代表真实 Agent 已自动交锋。
+仓库提供 [mcdebate Skill](skills/mcdebate/SKILL.md)：手动选择技能后说“开始”，默认创建购物房间并逐项收集信息；加入、续接、持续清单和多局对战使用同一技能。结账细节按需读取技能中的 references/checkout.md。技能须配合已连接的 MCP，不能自行保证客户端预加载或持续执行。豆包与 WorkBuddy 的配置、启动指令和反馈步骤见本地 [AGENT_START](docs/AGENT_START.md)；其中公网 MCP 配置已可用于接入验证。脚本中的固定观点是测试数据，不代表真实 Agent 已自动交锋。
 
 ## HTTP 接口
 
@@ -213,7 +215,7 @@ src/debug-page.ts    浏览器调试页、同源脚本和样式
 test/                Node 内置测试
 scripts/smoke.ts     实际 HTTP 冒烟测试
 scripts/mcp-smoke.ts 实际 MCP 协议与两客户端集成检查
-skills/mcdebate/      最小房间辩论 Skill
+skills/mcdebate/      点餐对战 Skill
 wrangler.jsonc       Cloudflare 本地/部署配置
 .vscode/mcp.json     VS Code 的官方麦当劳 MCP 输入提示配置
 mcp-config.example.json  通用 MCP 脱敏示例
