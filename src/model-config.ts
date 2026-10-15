@@ -1,7 +1,7 @@
 export interface ModelEnv {MODEL_PROVIDER?:string;OPENAI_API_KEY?:string;OPENAI_MODEL?:string;DEEPSEEK_API_KEY?:string;DEEPSEEK_MODEL?:string}
 export interface ModelConfig {provider:'openai'|'deepseek';endpoint:string;key:string;model:string}
 export function modelConfig(env:ModelEnv):ModelConfig {
-  const provider=env.MODEL_PROVIDER??'openai';
+  const provider=env.MODEL_PROVIDER??'deepseek';
   if(provider==='deepseek'){
     if(!env.DEEPSEEK_API_KEY?.trim())throw new Error('请配置DEEPSEEK_API_KEY');
     return {provider,endpoint:'https://api.deepseek.com/chat/completions',key:env.DEEPSEEK_API_KEY,model:env.DEEPSEEK_MODEL||'deepseek-flash'};
