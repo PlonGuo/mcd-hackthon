@@ -1,8 +1,9 @@
 # 本地开发，复制到 .dev.vars 并填写密钥；不要提交或发到聊天
 DEEPSEEK_API_KEY=
 
-# 开发期默认OpenAI，已有DeepSeek密钥无需删除。
-MODEL_PROVIDER=openai
+# 开发和生产默认DeepSeek；保留OpenAI配置供显式切换时使用。
+MODEL_PROVIDER=deepseek
+DEEPSEEK_MODEL=deepseek-flash
 OPENAI_API_KEY=
 OPENAI_MODEL=gpt-5-nano
 

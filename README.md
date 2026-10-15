@@ -2,7 +2,7 @@
 
 让不同手机上的 Agent 代表真实用户，围绕共享餐品展开辩论，最终由付款人确认消费决定。
 
-**本地0.6.0：TypeScript后端、持续清单/多局对战、付款人接受、结账核价/交接及模拟订单/支付已实现，新增独立的真实建单客户端。** 旧纯辩论模式保持兼容。正式结果只记付款人Agent上报，已真实创建外带/堂食待支付订单各一份，未执行支付；默认商品与订单均为明确标注的测试资料。开发模型默认OpenAI gpt-5-nano，DeepSeek暂不调用。线上仍0.3.1，阿里云与豆包/WorkBuddy验收留后。
+**本地0.6.1：TypeScript后端、持续清单/多局对战、付款人接受、结账核价/交接及模拟订单/支付已实现，新增独立的真实建单客户端。** 旧纯辩论模式保持兼容。正式结果只记付款人Agent上报，已真实创建外带/堂食待支付订单各一份，未执行支付；默认商品与订单均为明确标注的测试资料。开发辩手和后端裁判默认DeepSeek deepseek-flash，关闭思考模式。线上仍0.3.1，阿里云与豆包/WorkBuddy验收留后。
 
 本地研发资料见 [PRD](docs/PRD.md)、[CURRENT_STATUS](docs/CURRENT_STATUS.md) 和 [MCP 集成说明](docs/MCP_INTEGRATION.md)。`docs/` 按项目约定被 Git 忽略，仅保留在本地工作区；上述链接不会自动出现在新克隆的公开仓库中。
 
@@ -51,11 +51,11 @@ pnpm run check:shopping-ui
 
 `create_room` 增加 `mode:"shopping"` 才进入持续点餐；省略时仍为原纯辩论模式。Room、独立Battle与持续OrderDraft分别管理。购物模式准备/开局/发言携带battle_id；清单写入携带expected_draft_version/event_id。网页只读，判决后继续订阅SSE。目前共21个MCP工具，包括下述7个结账工具。
 
-在已有 `.dev.vars` 追加 `OPENAI_API_KEY` 即可，勿覆盖或展示密钥。默认 `MODEL_PROVIDER=openai`、`OPENAI_MODEL=gpt-5-nano`；可用环境变量改模型。当前选择低成本开发模型；模型可用性和上线时版本另验。缺少OpenAI密钥不会回落DeepSeek；只有显式配置 `MODEL_PROVIDER=deepseek` 才使用其密钥。生产规则及金额计算由代码执行。
+在已有 `.dev.vars` 私密配置 `DEEPSEEK_API_KEY`，默认 `MODEL_PROVIDER=deepseek`、`DEEPSEEK_MODEL=deepseek-flash`；两个开发辩手与后端裁判共用配置，关闭思考模式。缺少DeepSeek密钥明确失败，不自动回落OpenAI。已有OpenAI Key可保留，只有显式选择 `MODEL_PROVIDER=openai` 才会使用。不要覆盖已有密钥或展示环境文件；生产规则和金额计算由代码执行。
 
-点餐操作由确定性测试场景经MCP执行；两个模型使用独立历史与凭证，各自生成发言并实际调用submit_argument，裁判由后端独立调用。用户确认由场景模拟，不称为模型自主规划点餐、真人确认或豆包/WorkBuddy验收。已真实验证“锁店→先点餐→第一局中改单→采纳建议→第二局”：10次模型请求、两次有效判决、3行清单、27次SSE，用时34.346秒。结果只保留公开房间数据，不保存玩家凭证。模型请求有步数/超时上限，临时429/503最多重试两次；裁判每局仍最多请求一次。固定测试资料不代表官方菜单或报价。
+点餐操作由确定性测试场景经MCP执行；两个模型使用独立历史与凭证，各自生成发言并实际调用submit_argument，裁判由后端独立调用。用户确认由场景模拟，不称为模型自主规划点餐、真人确认或豆包/WorkBuddy验收。已真实验证“锁店→先点餐→第一局中改单→采纳建议→第二局”：最新DeepSeek回归12次模型请求、两次有效判决、3行清单、27次SSE，用时24.119秒；其中两次工具参数拒绝后，经有限修正成功。结果只保留公开房间数据，不保存玩家凭证。模型请求有步数/超时上限，临时429/503最多重试两次；裁判每局仍最多请求一次。固定测试资料不代表官方菜单或报价。
 
-当本机OpenAI出站依赖代理时，只给测试进程设置已有代理。Node 22.22可通过 `NODE_OPTIONS=--use-env-proxy` 和 `HTTPS_PROXY` 使用它。普通Wrangler/workerd的出站与Node不同；`pnpm run test:server` 使用官方Wrangler Test Harness运行同一Worker和DO，模型出站沿用Node代理，控制台显示临时端口，`demo:model`传该端口。此测试环境数据临时保存在内存，不能当生产部署或重启持久化验收。
+以下仅供显式使用OpenAI的历史调试：当本机OpenAI出站依赖代理时，只给测试进程设置已有代理。Node 22.22可通过 `NODE_OPTIONS=--use-env-proxy` 和 `HTTPS_PROXY` 使用它。普通Wrangler/workerd的出站与Node不同；`pnpm run test:server` 使用官方Wrangler Test Harness运行同一Worker和DO，模型出站沿用Node代理，控制台显示临时端口，`demo:model`传该端口。此测试环境数据临时保存在内存，不能当生产部署或重启持久化验收。
 
 `check:shopping-ui` 通过Playwright在390px与1280px检查真实SSE、清单、历史、自动滚动、刷新恢复及纯文本显示；首次缺浏览器时运行 `pnpm exec playwright install chromium`。后端和脚本由strict TypeScript检查；测试文件也已迁为.ts，使用Node测试运行器执行。
 
@@ -125,7 +125,7 @@ pnpm run smoke -- https://你的实际地址.workers.dev
 
 ## 最小房间 MCP（本地与公网已验证）
 
-本地地址 `http://localhost:8787/mcp`，公网地址 `https://mcdebate-room-poc.jason-ghzr.workers.dev/mcp`，采用 Streamable HTTP；复用当前 HTTP 房间和 Durable Object。线上0.3.1仍有七工具，本地0.6.0有21工具。原工具为 `create_room / join_room / set_ready / start_debate / get_room_state / submit_argument / close_room`。
+本地地址 `http://localhost:8787/mcp`，公网地址 `https://mcdebate-room-poc.jason-ghzr.workers.dev/mcp`，采用 Streamable HTTP；复用当前 HTTP 房间和 Durable Object。线上0.3.1仍有七工具，本地0.6.1有21工具。原工具为 `create_room / join_room / set_ready / start_debate / get_room_state / submit_argument / close_room`。
 
 创建/加入返回本人的 `player_token`，后续工具参数显式携带它；连接时不使用 Cloudflare 或麦当劳账户 Token。状态返回 `next_action / next_request / allowed_actions`，模板不含凭证，需要客户端加入自己的凭证。等待传 `wait_ms=2000`，读取完整消息用 `since=0`。工具仍由服务端验证权限、回合和重试。
 
@@ -214,7 +214,7 @@ Cloudflare 配置按 [SQLite-backed Durable Object 官方文档](https://develop
 
 新 MCP Demo 固定两人、四条发言。create/join 返回只读 watch_url；观众不占玩家席位，也不更新玩家在线时间。网页通过 SSE 展示已提交的完整发言，中途进入/重新连接加载完整记录；不会取得宿主模型内部逐字输出。
 
-首次运行可复制 `.dev.vars.example` 为 `.dev.vars` 并填入 `OPENAI_API_KEY`，不要把密钥发到聊天或提交。已存在的 `.dev.vars` 不要覆盖。Cloudflare 官方支持该文件作为本地私密配置。当前默认OpenAI gpt-5-nano；裁判每局只调用一次，最大预算60秒，结构校验后计算总分与胜者。没有密钥或模型失败时显示失败，不虚构判决。
+首次运行可复制 `.dev.vars.example` 为 `.dev.vars` 并填入 `DEEPSEEK_API_KEY`，不要把密钥发到聊天或提交。已存在的 `.dev.vars` 不要覆盖。Cloudflare 官方支持该文件作为本地私密配置。当前默认DeepSeek deepseek-flash且关闭思考；裁判每局只调用一次，最大预算60秒，结构校验后计算总分与胜者。没有密钥或模型失败时显示失败，不虚构判决。
 
 `FINISHED` 只表示发言封存；`judgement.status=PENDING` 继续等待，`SUCCEEDED` 包含真实评分，`FAILED` 只有脱敏失败码。页面不把模型判决描述为绝对客观。高分者胜；同分由裁判在同一次评分中给出唯一胜者与决胜理由，保留原始分数。观战页新增消息/判决时自动滚动，当前回合显示等待点动画；重复快照不重复滚动，断线/暂停/结束隐藏等待动画。
 

@@ -8,7 +8,7 @@
     "JUDGE_ENABLED": "true",
     "DEMO_TURN_MS": "120000",
     "DEEPSEEK_MODEL": "deepseek-flash",
-    "MODEL_PROVIDER": "openai",
+    "MODEL_PROVIDER": "deepseek",
     "OPENAI_MODEL": "gpt-5-nano",
     "SHOPPING_DATA_MODE": "fixture"
   },

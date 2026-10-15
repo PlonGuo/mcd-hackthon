@@ -39,7 +39,7 @@ async function observe(url:string){
 }
 try{
   await Promise.all([a.connect(),b.connect()]);
-  await a.call('create_room',{mode:'shopping',name:'麦乐鸡方',agent_label:'OpenAI测试 A',topic:'一起点餐'});assert.ok(a.identity&&a.watchUrl);
+  await a.call('create_room',{mode:'shopping',name:'麦乐鸡方',agent_label:config.provider+'测试 A',topic:'一起点餐'});assert.ok(a.identity&&a.watchUrl);
   await mkdir(evidence,{recursive:true});await writeFile(evidence+'/live-view.json',JSON.stringify({room_id:a.identity.room_id,watch_url:a.watchUrl,source:'TEST_FIXTURE'}));
   await observe(a.watchUrl);
   const menu=catalogSchema.parse(await a.call('query_demo_catalog'));
@@ -48,7 +48,7 @@ try{
   for(const code of ['TEST_NUGGETS','TEST_COLA'])await a.call('report_item',menu.items.find(i=>i.meal_code===code)!);
   let room=await state();const nuggets=room.items.find(i=>i.meal_code==='TEST_NUGGETS')!,cola=room.items.find(i=>i.meal_code==='TEST_COLA')!;
   await a.call('update_order_draft',{operation:'add',item_id:cola.item_id,owner:'shared',quantity:1,expected_draft_version:room.draft.version,event_id:'before-battle-cola'});
-  b.joinRoomId=a.identity.room_id;await b.call('join_room',{name:'薯条方',agent_label:'OpenAI测试 B'});
+  b.joinRoomId=a.identity.room_id;await b.call('join_room',{name:'薯条方',agent_label:config.provider+'测试 B'});
   const otherMenu=catalogSchema.parse(await b.call('query_demo_catalog'));await b.call('report_item',otherMenu.items.find(i=>i.meal_code==='TEST_FRIES')!);
   room=await state();const fries=room.items.find(i=>i.meal_code==='TEST_FRIES')!;
   assert.equal(nuggets.unit_price_cents,1300);assert.equal(fries.unit_price_cents,1200);assert.equal(room.draft.lines[0].owner_player_id,null);assert.equal(room.draft.total_cents,900);
