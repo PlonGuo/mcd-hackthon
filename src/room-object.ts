@@ -1,3 +1,4 @@
+import type { AppEnv, RoomContext } from './runtime/types.ts';
 import { createRoom, transition, tickRoom, viewRoom, RoomError } from './core.ts';
 import { readJson, readBearer, hashToken, newToken, jsonResponse, errorResponse } from './http.ts';
 import { buildWatchView, buildWatchUrl, authorizeWatch } from './watch-view.ts';
@@ -10,8 +11,8 @@ import type { StoredRoom, JudgeOutcome } from './types.ts';
 const tick=(room:StoredRoom,now:number):StoredRoom=>isShoppingRoom(room)?tickShopping(room,now):tickRoom(room,now);
 const view=(room:StoredRoom,actor:string,since:number,now:number)=>isShoppingRoom(room)?viewShopping(room,actor,since,now):viewRoom(room,actor,since,now);
 export class RoomController {
-  ctx: DurableObjectState; env:Env; fetchImpl:typeof fetch; watchHub:ReturnType<typeof createWatchHub>;
-  constructor(ctx:DurableObjectState, env:Env, {fetchImpl=fetch}: {fetchImpl?:typeof fetch}={}) {this.ctx=ctx;this.env=env;this.fetchImpl=fetchImpl;this.watchHub=createWatchHub();}
+  ctx: RoomContext; env:AppEnv; fetchImpl:typeof fetch; watchHub:ReturnType<typeof createWatchHub>;
+  constructor(ctx:RoomContext, env:AppEnv, {fetchImpl=fetch}: {fetchImpl?:typeof fetch}={}) {this.ctx=ctx;this.env=env;this.fetchImpl=fetchImpl;this.watchHub=createWatchHub();}
   async fetch(request:Request):Promise<Response> {
     const response=await this.ctx.blockConcurrencyWhile(async()=>{
       try{return await this.handle(request);}catch(error){if(!(error instanceof RoomError))console.error('Room storage request failed:',error instanceof Error?error.name:'Unknown');return errorResponse(error);}

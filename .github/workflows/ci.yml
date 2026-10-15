@@ -12,7 +12,7 @@ permissions:
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   checks:
@@ -29,7 +29,7 @@ jobs:
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 22.22.0
+          node-version: 22.23.3
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Check publish safety
@@ -37,7 +37,7 @@ jobs:
       - name: Run tests
         run: pnpm test
       - name: Typecheck and build without deployment
-        run: pnpm run build
+        run: pnpm run build && pnpm run build:node
       - name: Install browser
         run: pnpm exec playwright install --with-deps chromium
       - name: Verify shopping and checkout pages with local fixtures
@@ -60,3 +60,69 @@ jobs:
           fi
           pnpm run check:shopping-ui
           pnpm run check:checkout-ui
+
+      - name: Verify Node server pages with local fixtures
+        shell: bash
+        run: |
+          MCDEBATE_PUBLIC_ORIGIN=http://127.0.0.1:8870 PORT=8870 DATA_DIR=.local/ci-node JUDGE_ENABLED=false SHOPPING_DATA_MODE=fixture node dist/node/server.mjs > /tmp/mcdebate-node-ci.log 2>&1 &
+          node_pid=$!
+          trap 'kill "$node_pid" 2>/dev/null || true' EXIT
+          ready=false
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:8870/health > /dev/null; then
+              ready=true
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" != true ]; then
+            cat /tmp/mcdebate-node-ci.log
+            exit 1
+          fi
+          BASE_URL=http://127.0.0.1:8870 pnpm run check:shopping-ui
+          BASE_URL=http://127.0.0.1:8870 pnpm run check:checkout-ui
+
+  deploy:
+    name: deploy
+    needs: checks
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    concurrency:
+      group: production-deploy
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22.23.3
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build:node
+      - name: Deploy tested commit and verify HTTPS health
+        env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_SSH_KEY"
+          test -n "$DEPLOY_KNOWN_HOSTS"
+          umask 077
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/mcdebate
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          if ! ssh -i ~/.ssh/mcdebate -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15 "mcdebate@$DEPLOY_HOST" "$GITHUB_SHA" < dist/node/server.mjs; then
+            ssh -i ~/.ssh/mcdebate -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15 "mcdebate@$DEPLOY_HOST" "rollback $GITHUB_SHA"
+            exit 1
+          fi
+          if ! curl --fail --silent --show-error --max-time 10 --retry 3 "https://$DEPLOY_HOST/health" |
+            node -e 'let s="";process.stdin.on("data",d=>s+=d);process.stdin.on("end",()=>{const data=JSON.parse(s);if(!data.ok||data.data.release!==process.env.GITHUB_SHA)process.exit(1);console.log("Production release verified: "+data.data.release)})'; then
+            ssh -i ~/.ssh/mcdebate -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15 "mcdebate@$DEPLOY_HOST" "rollback $GITHUB_SHA"
+            exit 1
+          fi

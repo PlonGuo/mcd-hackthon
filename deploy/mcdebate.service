@@ -1,0 +1,26 @@
+[Unit]
+Description=McDebate MCP and spectator server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=mcdebate
+Group=mcdebate
+WorkingDirectory=/srv/mcdebate/current
+EnvironmentFile=/etc/mcdebate/server.env
+ExecStart=/usr/local/bin/node /srv/mcdebate/current/start.mjs
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=80
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/mcdebate
+LimitNOFILE=4096
+MemoryMax=900M
+
+[Install]
+WantedBy=multi-user.target

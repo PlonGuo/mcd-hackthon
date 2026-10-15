@@ -1,0 +1,31 @@
+limit_req_zone $binary_remote_addr zone=mcdebate:10m rate=20r/s;
+server {
+    listen 80 default_server;
+    server_name SERVER_IP;
+    location /.well-known/acme-challenge/ { root /var/www/acme; }
+    location / { return 301 https://SERVER_IP$request_uri; }
+}
+server {
+    listen 443 ssl default_server;
+    server_name SERVER_IP;
+    ssl_certificate /etc/letsencrypt/live/SERVER_IP/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/SERVER_IP/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    if ($host != SERVER_IP) { return 421; }
+    client_max_body_size 16k;
+    client_body_timeout 15s;
+    access_log off;
+    location / {
+        limit_req zone=mcdebate burst=100 nodelay;
+        limit_req_status 429;
+        proxy_pass http://127.0.0.1:8870;
+        proxy_http_version 1.1;
+        proxy_set_header Host SERVER_IP;
+        proxy_set_header Connection "";
+        proxy_buffering off;
+        proxy_cache off;
+        proxy_read_timeout 150s;
+        proxy_send_timeout 150s;
+        add_header X-Accel-Buffering no;
+    }
+}

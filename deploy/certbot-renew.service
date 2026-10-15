@@ -1,0 +1,6 @@
+[Unit]
+Description=Renew McDebate IP HTTPS certificate
+
+[Service]
+Type=oneshot
+ExecStart=/opt/certbot/bin/certbot renew --quiet --deploy-hook "/usr/bin/systemctl reload nginx"

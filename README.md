@@ -2,7 +2,7 @@
 
 让不同手机上的 Agent 代表真实用户，围绕共享餐品展开辩论，最终由付款人确认消费决定。
 
-**本地0.6.1：TypeScript后端、持续清单/多局对战、付款人接受、结账核价/交接及模拟订单/支付已实现，新增独立的真实建单客户端。** 旧纯辩论模式保持兼容。正式结果只记付款人Agent上报，已真实创建外带/堂食待支付订单各一份，未执行支付；默认商品与订单均为明确标注的测试资料。开发辩手和后端裁判默认DeepSeek deepseek-flash，关闭思考模式。线上仍0.3.1，阿里云与豆包/WorkBuddy验收留后。
+**当前0.6.2：TypeScript后端、持续清单/多局对战、付款人接受、结账核价/交接及模拟订单/支付已实现，新增独立的真实建单客户端。** 旧纯辩论模式保持兼容。正式结果只记付款人Agent上报，已真实创建外带/堂食待支付订单各一份，未执行支付；默认商品与订单均为明确标注的测试资料。开发辩手和后端裁判默认DeepSeek deepseek-flash，关闭思考模式。新增阿里云单机运行入口及通过 CI 后部署的流水线；豆包/WorkBuddy和大陆无VPN访问仍须部署后验收。
 
 本地研发资料见 [PRD](docs/PRD.md)、[CURRENT_STATUS](docs/CURRENT_STATUS.md) 和 [MCP 集成说明](docs/MCP_INTEGRATION.md)。`docs/` 按项目约定被 Git 忽略，仅保留在本地工作区；上述链接不会自动出现在新克隆的公开仓库中。
 
@@ -12,13 +12,13 @@ GitHub公开仓库：<https://github.com/PlonGuo/mcd-hackthon>。
 
 日常从`main`新建分支，提交后发PR；`CI / checks`通过后合并。主分支要求PR、最新CI成功和讨论解决，禁止强推/删除。个人开发不要求另一位审阅人批准；CI检查对管理员同样生效。
 
-CI使用Node22.22.0和项目固定pnpm版本，无需业务密钥。执行索引发布安全检查、完整测试、strict类型检查和Wrangler打包dry-run，再用Playwright验证390/1280购物与模拟结账页面。不会调用真实模型/麦当劳交易或部署Cloudflare。`.dev.vars`、`.local`订单与凭证、运行数据、截图及本地`docs/`不发布。
+CI使用Node22.23.3和项目固定pnpm版本，无需业务密钥。执行索引发布安全检查、完整测试、strict类型检查和Wrangler打包dry-run，再用Playwright分别验证Workers与Node的390/1280购物与模拟结账页面。不会调用真实模型/麦当劳交易或部署Cloudflare。`.dev.vars`、`.local`订单与凭证、运行数据、截图及本地`docs/`不发布。
 
-阿里云部署尚未启用：当前Workers/Durable Objects需要先完成服务器运行适配，随后购买服务器、配置域名/HTTPS和部署凭据。目标为`main`通过同一CI后才部署该提交，失败保留旧版本并验证健康；PR只检查，不接触生产凭据。不把当前CI成功当作阿里云已部署。生产McDebate MCP与阿里云管理MCP分别配置：前者给豆包/WorkBuddy使用，后者给开发Agent管理基础设施。
+阿里云单机运行入口位于`src/runtime/node/`，复用业务代码，以SQLite保存房间和超时任务，进程内按房间串行执行。Node只监听本机8870，Nginx提供公网IP HTTPS与持续SSE。`main`通过同一CI后才部署该提交，健康检查失败恢复旧版本；PR只检查，不接触生产凭据。安装和凭据配置见[部署说明](deploy/README.md)。生产McDebate MCP与阿里云管理MCP分别配置：前者给豆包/WorkBuddy使用，后者给开发Agent管理基础设施。
 
 ## 本地运行
 
-需要 Node.js 22.18 或以上、pnpm 10。无需麦当劳 Token，无需先登录 Cloudflare。
+需要 Node.js 22.18 或以上（CI/服务器固定22.23.3）、pnpm 10。无需麦当劳 Token，无需先登录 Cloudflare。
 
 ```sh
 pnpm install
@@ -39,6 +39,16 @@ pnpm run build
 `smoke` 创建两个测试房间，验证两客户端流程、并发加入、并发发言重试、越权拒绝、增量读取及关闭。退出码非零表示失败。
 
 `build` 先做严格类型检查，再做打包和部署配置检查，不发布到 Cloudflare。生成的 `dist/` 和本地 `.wrangler/` 数据不会进入版本控制。
+
+## 普通服务器运行
+
+```sh
+pnpm run build:node
+# 新服务器配置默认为 reported，裁判需要 DEEPSEEK_API_KEY。
+MCDEBATE_PUBLIC_ORIGIN=http://127.0.0.1:8870 JUDGE_ENABLED=false pnpm run start:node
+```
+
+服务器运行代码集中在 `src/runtime/node/`，公共接口在 `src/runtime/types.ts`；业务规则仍在现有房间与 `shopping/` 模块。`dist/node/server.mjs` 是部署时生成的 JavaScript 构建产物，源码继续使用 TypeScript。生产环境通过 systemd 启动并独立保存数据，见[部署说明](deploy/README.md)。
 
 ## 持续点餐与模型开发验收
 
