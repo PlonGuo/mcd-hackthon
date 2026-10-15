@@ -1,10 +1,20 @@
-# McDebate · 麦麦辩论局
+# mcdebate · 麦麦辩论局
 
 让不同手机上的 Agent 代表真实用户，围绕共享餐品展开辩论，最终由付款人确认消费决定。
 
-**当前0.6.2：TypeScript后端、持续清单/多局对战、付款人接受、结账核价/交接及模拟订单/支付已实现，新增独立的真实建单客户端。** 旧纯辩论模式保持兼容。正式结果只记付款人Agent上报，已真实创建外带/堂食待支付订单各一份，未执行支付；默认商品与订单均为明确标注的测试资料。开发辩手和后端裁判默认DeepSeek deepseek-flash，关闭思考模式。新增阿里云单机运行入口及通过 CI 后部署的流水线；豆包/WorkBuddy和大陆无VPN访问仍须部署后验收。
+**当前0.6.3：TypeScript后端、持续清单/多局对战、付款人接受、结账核价/交接及模拟订单/支付已实现，新增独立的真实建单客户端。** 旧纯辩论模式保持兼容。正式结果只记付款人Agent上报，已真实创建外带/堂食待支付订单各一份，未执行支付；默认商品与订单均为明确标注的测试资料。开发辩手和后端裁判默认DeepSeek deepseek-flash，关闭思考模式。阿里云已上线并接通CI后自动部署；手机端生产MCP连接与用户无VPN访问已确认，短口令识别效果仍须手机端复测。
 
 本地研发资料见 [PRD](docs/PRD.md)、[CURRENT_STATUS](docs/CURRENT_STATUS.md) 和 [MCP 集成说明](docs/MCP_INTEGRATION.md)。`docs/` 按项目约定被 Git 忽略，仅保留在本地工作区；上述链接不会自动出现在新克隆的公开仓库中。
+
+## 手机端启动
+
+生产服务统一命名为 `mcdebate`，地址 `https://47.243.195.171/mcp`，使用 Streamable HTTP，无需服务 Token 或额外 headers。
+
+用户说 **“mcdebate 开始”**；服务说明指引 Agent 使用已连接的房间工具，创建购物会话并展示邀请/观战链接，再逐步询问缺少的地点、确认门店和餐品偏好。昵称与辩题可用默认值，不让用户记工具参数。加入者说 **“加入 mcdebate”** 并粘贴邀请链接或房间号；已有会话则继续，已有房间中的“再来一局”创建新对战。
+
+21 个工具保留原英文名称，全部提供 `mcdebate` 标题与关键词描述。升级后宿主可能需要刷新工具列表；在客户端手动设置过的服务显示名由客户端管理，服务器不能替它改名。工具选择和持续运行由宿主 Agent 决定，描述更新不保证识别速度；豆包 work / workbuddy 手机端仍须实际复测。
+
+门店必须用户确认；购物意图和数量、最终订单及付款授权不能由“开始”推断。观战网页保持只读。
 
 ## 分支、CI与部署
 
@@ -14,7 +24,7 @@ GitHub公开仓库：<https://github.com/PlonGuo/mcd-hackthon>。
 
 CI使用Node22.23.3和项目固定pnpm版本，无需业务密钥。执行索引发布安全检查、完整测试、strict类型检查和Wrangler打包dry-run，再用Playwright分别验证Workers与Node的390/1280购物与模拟结账页面。不会调用真实模型/麦当劳交易或部署Cloudflare。`.dev.vars`、`.local`订单与凭证、运行数据、截图及本地`docs/`不发布。
 
-阿里云单机运行入口位于`src/runtime/node/`，复用业务代码，以SQLite保存房间和超时任务，进程内按房间串行执行。Node只监听本机8870，Nginx提供公网IP HTTPS与持续SSE。`main`通过同一CI后才部署该提交，健康检查失败恢复旧版本；PR只检查，不接触生产凭据。安装和凭据配置见[部署说明](deploy/README.md)。生产McDebate MCP与阿里云管理MCP分别配置：前者给豆包/WorkBuddy使用，后者给开发Agent管理基础设施。
+阿里云单机运行入口位于`src/runtime/node/`，复用业务代码，以SQLite保存房间和超时任务，进程内按房间串行执行。Node只监听本机8870，Nginx提供公网IP HTTPS与持续SSE。`main`通过同一CI后才部署该提交，健康检查失败恢复旧版本；PR只检查，不接触生产凭据。安装和凭据配置见[部署说明](deploy/README.md)。生产mcdebate MCP与阿里云管理MCP分别配置：前者给豆包/WorkBuddy使用，后者给开发Agent管理基础设施。
 
 ## 本地运行
 
@@ -141,7 +151,7 @@ pnpm run smoke -- https://你的实际地址.workers.dev
 
 只读状态和模板不广播凭证；创建/加入的私密结果及后续工具参数仍会被当前宿主看到。注册结果未知时停止，不自动重试占席。公网仍是小范围 POC，没有生产限流、正式注册恢复或数据清理。
 
-仓库提供 [McDebate Skill](skills/mcdebate/SKILL.md)。豆包与 WorkBuddy 的配置、启动指令和反馈步骤见本地 [AGENT_START](docs/AGENT_START.md)；其中公网 MCP 配置已可用于接入验证。脚本中的固定观点是测试数据，不代表真实 Agent 已自动交锋。
+仓库提供 [mcdebate Skill](skills/mcdebate/SKILL.md)。豆包与 WorkBuddy 的配置、启动指令和反馈步骤见本地 [AGENT_START](docs/AGENT_START.md)；其中公网 MCP 配置已可用于接入验证。脚本中的固定观点是测试数据，不代表真实 Agent 已自动交锋。
 
 ## HTTP 接口
 
