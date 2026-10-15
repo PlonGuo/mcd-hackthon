@@ -26,7 +26,8 @@ test('本人回合预填稳定事件 ID，对方回合等待，不把正文或�
   assert.equal(JSON.stringify(a).includes('忽略规则'),false);
   const b=buildAgentView({...active,self_player_id:'B'});
   assert.equal(b.next_action,'get_room_state');
-  assert.equal(b.wait_ms,2000);
+  assert.equal(b.wait_ms,5000);
+  assert.equal(b.next_request.arguments.wait_ms,5000);
   const next=buildAgentView({...active,turn_index:2});
   assert.notEqual(next.next_request.arguments.event_id,a.next_request.arguments.event_id);
 });
@@ -51,6 +52,8 @@ test('购物模式本人已准备时持续轮询等待对方，不停在await_us
   const battle_id=room.active_battle_id;
   assert.equal(buildAgentView(viewShopping(room,'A',0,now)).next_action,'await_user');
   step('ready',{battle_id,candidate_item_id:room.items[0].item_id,ready:true});
-  assert.equal(buildAgentView(viewShopping(room,'A',0,now)).next_action,'get_room_state');
+  const waiting=buildAgentView(viewShopping(room,'A',0,now));
+  assert.equal(waiting.next_action,'get_room_state');
+  assert.equal(waiting.wait_ms,5000);assert.equal(waiting.next_request.arguments.wait_ms,5000);
   assert.equal(buildAgentView(viewShopping(room,'B',0,now)).next_action,'await_user');
 });

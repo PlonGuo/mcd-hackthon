@@ -9,7 +9,7 @@ export function buildAgentView(room: RoomView) {
   const result = (next_action: string, args: Record<string, unknown> = {}, wait_ms = 0) => ({ allowed_actions, next_action, wait_ms,
     next_request: next_action === 'stop' ? null : { tool: next_action,
       arguments: { room_id: room.room_id, ...args }, credential_required: true } });
-  const wait = () => result('get_room_state', { since: 0, wait_ms: 2000 }, 2000);
+  const wait = () => result('get_room_state', { since: 0, wait_ms: 5000 }, 5000);
   if(room.status==='FINISHED' && room.judgement?.status==='PENDING')return wait();
   if (['FINISHED', 'PAUSED', 'CLOSED', 'EXPIRED'].includes(room.status)) return result('stop');
   if (['WAITING', 'READY'].includes(room.status)) {
@@ -31,7 +31,7 @@ export function buildAgentView(room: RoomView) {
 
 function shoppingAgentView(room: Extract<RoomView,{mode:'shopping'}>) {
   const actions=['get_room_state'];
-  const result=(next_action: string,args: Record<string,unknown>={})=>({allowed_actions:actions,next_action,wait_ms:next_action==='get_room_state'?2000:0,next_request:next_action==='stop'||next_action==='await_user'?null:{tool:next_action,arguments:{room_id:room.room_id,...args},credential_required:true}});
+  const result=(next_action: string,args: Record<string,unknown>={})=>({allowed_actions:actions,next_action,wait_ms:next_action==='get_room_state'?5000:0,next_request:next_action==='stop'||next_action==='await_user'?null:{tool:next_action,arguments:{room_id:room.room_id,...args},credential_required:true}});
   const host=room.self_player_id===room.host_player_id;
   if(room.status!=='OPEN'){
     if(room.checkout?.payer_player_id===room.self_player_id&&room.server_time<room.checkout.reconcile_until){
@@ -62,9 +62,9 @@ function shoppingAgentView(room: Extract<RoomView,{mode:'shopping'}>) {
   if(battle.status==='PREPARING'){
     actions.push('set_ready');
     if(host&&room.players.length===2&&room.players.every(p=>battle.ready[p.player_id]&&p.online)){actions.push('start_debate');return result('start_debate',{battle_id:battle.battle_id});}
-    return battle.ready[room.self_player_id]?result('get_room_state',{since:0,wait_ms:2000}):result('await_user');
+    return battle.ready[room.self_player_id]?result('get_room_state',{since:0,wait_ms:5000}):result('await_user');
   }
   if(battle.status==='ACTIVE'&&battle.current_turn?.player_id===room.self_player_id){actions.push('submit_argument');return result('submit_argument',{battle_id:battle.battle_id,turn_id:battle.current_turn.turn_id,event_id:`arg_${battle.battle_id}_${battle.arguments.length+1}`});}
   if(battle.status==='PAUSED')return result('await_user');
-  return result('get_room_state',{since:0,wait_ms:2000});
+  return result('get_room_state',{since:0,wait_ms:5000});
 }

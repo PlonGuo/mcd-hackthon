@@ -50,7 +50,7 @@ test('无效凭证、自报角色、越界参数在工具校验处拒绝，不�
   for (const args of [
     { room_id: roomId, player_token: 'wrong' },
     { room_id: roomId, player_token: token, is_host: true },
-    { room_id: roomId, player_token: token, wait_ms: 2001 },
+    { room_id: roomId, player_token: token, wait_ms: 5001 },
     { room_id: roomId, player_token: token, wait_ms: 0.1 },
   ]) await assert.rejects(() => executeRoomTool(env, 'get_room_state', args));
   await assert.rejects(() => executeRoomTool(env,'submit_argument',{ room_id:roomId,player_token:token,turn_id:'t',event_id:'e',text:'x'.repeat(201) }));
@@ -105,4 +105,14 @@ test('工具发现保留21个兼容名称，提供 mcdebate 标题并区分新�
   assert.match(byName.create_room.description,/mode=shopping/);
   assert.match(byName.create_battle.description,/已有/);
   assert.match(byName.join_room.description,/房间号/);
+});
+
+
+test('五秒等待读取最新状态，等待参数不进入房间动作',async()=>{
+  const env=fakeEnv(),started=Date.now();
+  const result=await executeRoomTool(env,'get_room_state',{room_id:roomId,player_token:token,wait_ms:5000});
+  assert.equal(result.isError,false);
+  assert.ok(Date.now()-started>=4900,'必须执行服务端等待，不能把轮询间隔只写在提示词中');
+  assert.equal(env.calls.length,1);assert.equal(env.calls[0].method,'GET');
+  assert.equal(new URL(env.calls[0].url).pathname,'/rooms/'+roomId+'/state');
 });
