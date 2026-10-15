@@ -10,7 +10,6 @@
 - [Skill 版本、变更说明与导入包](skill-releases/README.md)
 - [麦当劳 MCP 集成说明](MCP_INTEGRATION.md)
 - [参赛声明](CONTEST_DECLARATION.md)
-- [报名 issue 标题](ISSUE_TITLE.txt) · [报名 issue 正文](ISSUE_BODY.md)
 
 ## 能做什么
 
@@ -147,7 +146,7 @@ deploy/               服务器、Nginx、证书与发布说明
 
 ## 参赛材料
 
-本仓库参与 [麦当劳程序员创意开发大赛](https://github.com/M-China/mcd-developer-innovation-challenge)。根目录提供比赛要求的 `README.md`、官方原样 `CONTEST_DECLARATION.md`、`MCP_INTEGRATION.md` 和项目源码；报名内容分别位于 `ISSUE_TITLE.txt`、`ISSUE_BODY.md`，供 review 后使用。
+本仓库参与 [麦当劳程序员创意开发大赛](https://github.com/M-China/mcd-developer-innovation-challenge)。根目录提供比赛要求的 `README.md`、官方原样 `CONTEST_DECLARATION.md`、`MCP_INTEGRATION.md` 和项目源码。
 
 `CONTEST_DECLARATION.md` 取自[官方原文](https://github.com/M-China/mcd-developer-innovation-challenge/blob/f50c8c8fa50516123ef6e5f8710d1ed72d563472/CONTEST_DECLARATION.md)，已逐字节核对，未改写。报名正文使用官方要求的字段格式：项目地址为裸链接，每个字段的标签与内容在同一行。[官方提交要求](https://github.com/M-China/mcd-developer-innovation-challenge#开发-skill)
 
