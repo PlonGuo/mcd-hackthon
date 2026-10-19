@@ -6,7 +6,7 @@ import { CHECKOUT_ACTIONS } from './shopping/checkout.ts';
 const ROOM_ACTIONS=['join','ready','start','state','say','close','context','item','draft','battle','cancel','recommendation',...CHECKOUT_ACTIONS];
 
 export async function handleWatchRequest(request: Request, env: AppEnv) {
-  const match=/^\/watch\/([a-f0-9]{24})\/([a-f0-9]{64})(?:\/(snapshot|events))?$/.exec(new URL(request.url).pathname);
+  const match=/^\/watch\/([a-f0-9]{24})\/([a-f0-9]{32}|[a-f0-9]{64})(?:\/(snapshot|events))?$/.exec(new URL(request.url).pathname);
   if(!match) return null;
   if(request.method!=='GET') return errorResponse(new RoomError('METHOD_NOT_ALLOWED','只读观战不支持此操作',405));
   return env.ROOMS.get(env.ROOMS.idFromName(match[1])).fetch(request);

@@ -1,10 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './room-fixture.ts';
+import { hashToken } from '../src/http.ts';
 
 test('创建加入共用只读URL，观众不占席/不刷新在线/无操作权',async()=>{
   const f=fixture();const {a,b,path}=await f.create();
   assert.equal(a.watch_url,b.watch_url);
+  assert.match(a.watch_url,/\/watch\/[a-f0-9]{24}\/[a-f0-9]{32}$/);
+  assert.match(a.player_token,/^[a-f0-9]{64}$/);
   assert.equal(a.room._watch_token,undefined);
   const watch=new URL(a.watch_url).pathname;
   const before=structuredClone(f.stored.players);
@@ -15,6 +18,14 @@ test('创建加入共用只读URL，观众不占席/不刷新在线/无操作权
   assert.equal((await f.api(path+'/start',{},f.stored._watch_token)).status,401);
   const wrong=watch.slice(0,-1)+(watch.endsWith('0')?'1':'0');
   assert.equal((await f.request(wrong+'/snapshot')).status,403);
+  f.controller.watchHub.close();
+});
+test('旧版64位观战链接继续可访问',async()=>{
+  const f=fixture();const {a}=await f.create();
+  const legacy='c'.repeat(64),stored=f.stored;
+  stored._watch_token=legacy;stored._watch_token_hash=await hashToken(legacy);f.stored=stored;
+  const url=new URL(a.watch_url);url.pathname=`/watch/${a.room.room_id}/${legacy}/snapshot`;
+  assert.equal((await f.request(url.pathname)).status,200);
   f.controller.watchHub.close();
 });
 test('观战基址错误导致加入失败时不占用席位，恢复配置后可加入',async()=>{

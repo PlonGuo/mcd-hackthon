@@ -22,6 +22,15 @@ test('二十一个 MCP 工具映射到同一个房间入口，成功双格式一
   assert.equal(env.calls[0].headers.get('Authorization'), `Bearer ${token}`);
   assert.equal(JSON.stringify(result).includes(token), false);
 });
+test('创建房间的文本回执将原始观战链接置前，结构化回执与其一致',async()=>{
+  const watch_url=`https://example.test/watch/${roomId}/${'c'.repeat(32)}`;
+  const env=fakeEnv({ok:true,data:{room:{room_id:roomId,self_player_id:'A',host_player_id:'A',status:'WAITING',players:[{player_id:'A',ready:false}],current_turn:null,turn_index:0},player_id:'A',player_token:token,watch_url}});
+  const result=await executeRoomTool(env,'create_room',{name:'A',topic:'选餐'});
+  const textBody=JSON.parse(result.content[0].text);
+  assert.equal(Object.keys(textBody.data)[0],'watch_url');
+  assert.equal(textBody.data.watch_url,watch_url);
+  assert.deepEqual(textBody,result.structuredContent);
+});
 test('房间业务错误 isError=true，未知异常脱敏，创建失败不建议自动重试', async () => {
   const error = { ok: false, error: { code: 'FORBIDDEN', message: '仅房主', expected_action: 'ask_host', retryable: false } };
   const r = await executeRoomTool(fakeEnv(error), 'close_room', { room_id: roomId, player_token: token });

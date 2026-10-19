@@ -57,3 +57,26 @@ test('购物模式本人已准备时持续轮询等待对方，不停在await_us
   assert.equal(waiting.wait_ms,5000);assert.equal(waiting.next_request.arguments.wait_ms,5000);
   assert.equal(buildAgentView(viewShopping(room,'B',0,now)).next_action,'await_user');
 });
+
+test('付款人报价过期时提示先只读核价，新报价仍需购买确认',()=>{
+  const shopping={mode:'shopping',room_id:'a'.repeat(24),status:'OPEN',self_player_id:'B',host_player_id:'A',
+    server_time:200,context:{},checkout:{status:'QUOTED',payer_player_id:'B',source:'AGENT_REPORTED',quote_expires_at:199}};
+  const expired=buildAgentView(shopping as unknown as Parameters<typeof buildAgentView>[0]);
+  assert.match(expired.checkout_guidance,/先用当前可见的官方工具只读重新核价/);
+  assert.match(expired.checkout_guidance,/再请用户确认新方案/);
+  const valid=buildAgentView({...shopping,checkout:{...shopping.checkout,quote_expires_at:201}} as unknown as Parameters<typeof buildAgentView>[0]);
+  assert.doesNotMatch(valid.checkout_guidance,/旧报价已过期/);
+  const fixture=buildAgentView({...shopping,checkout:{...shopping.checkout,source:'TEST_FIXTURE'}} as unknown as Parameters<typeof buildAgentView>[0]);
+  assert.match(fixture.checkout_guidance,/simulate_checkout\(quote\)/);
+  assert.match(fixture.checkout_guidance,/不再report_checkout\(QUOTED\)/);
+});
+
+test('已接受的非房主付款人等待房主固定清单时持续读状态',()=>{
+  const shopping={mode:'shopping',room_id:'a'.repeat(24),status:'OPEN',self_player_id:'B',host_player_id:'A',
+    server_time:200,context:{},checkout:null,payer:{player_id:'B',accepted:true},
+    draft:{lines:[{line_id:'line-a'}]},active_battle_id:null,battles:[]};
+  const waiting=buildAgentView(shopping as unknown as Parameters<typeof buildAgentView>[0]);
+  assert.equal(waiting.next_action,'get_room_state');
+  assert.equal(waiting.next_request?.arguments.wait_ms,5000);
+  assert.equal(waiting.wait_ms,5000);
+});

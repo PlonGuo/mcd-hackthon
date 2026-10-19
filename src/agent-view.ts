@@ -50,14 +50,26 @@ function shoppingAgentView(room: Extract<RoomView,{mode:'shopping'}>) {
       actions.push('get_checkout_package','report_checkout');
       if(checkout.source==='TEST_FIXTURE')actions.push('simulate_checkout');
     }
-    return {...result('await_user'),checkout_guidance:checkout.status==='UNKNOWN'||checkout.status==='SUBMITTING'?'先用付款人账户查询订单；结果未知禁止重复创建。':checkout.status==='QUOTED'?'向付款人展示固定门店、完整商品、数量和最终金额，并从核价选项中确认堂食/外带；房间上报不能代替宿主审批。':checkout.status==='ORDER_CREATED'?'用户自行打开官方支付链接付款，再查官方订单；支付链接不得进入公共房间。':checkout.status==='ORDER_CANCELLED'?'订单已取消；不代表退款已完成，如需重新点餐请新建房间。':checkout.status==='PAID'?'本清单已进入订单流程；测试结果或Agent上报不等于官方验证。新一餐请新建房间。':'指定付款人领取方案后重新核价；测试房间使用模拟工具。'};
+    const quoteExpired=checkout.status==='QUOTED'&&checkout.quote_expires_at!=null&&room.server_time>=checkout.quote_expires_at;
+    const guidance=checkout.status==='UNKNOWN'||checkout.status==='SUBMITTING'?'先用付款人账户查询订单；结果未知禁止重复创建。':
+      quoteExpired&&payer?(checkout.source==='TEST_FIXTURE'?'旧报价已过期；先用simulate_checkout(quote)重新模拟核价，成功即已更新房间报价，不再report_checkout(QUOTED)；请用户确认新方案，不能按旧报价建单。':'旧报价已过期；先用当前可见的官方工具只读重新核价，成功后上报新报价，再请用户确认新方案；旧确认不能授权建单。'):
+      checkout.status==='QUOTED'?'向付款人展示固定门店、完整商品、数量和最终金额，并从核价选项中确认堂食/外带；房间上报不能代替宿主审批。':
+      checkout.status==='ORDER_CREATED'?'用户自行打开官方支付链接付款，再查官方订单；支付链接不得进入公共房间。':
+      checkout.status==='ORDER_CANCELLED'?'订单已取消；不代表退款已完成，如需重新点餐请新建房间。':
+      checkout.status==='PAID'?'本清单已进入订单流程；测试结果或Agent上报不等于官方验证。新一餐请新建房间。':'指定付款人领取方案后重新核价；测试房间使用模拟工具。';
+    return {...result('await_user'),checkout_guidance:guidance};
   }
   if(host)actions.push('nominate_payer');
   if(room.payer?.player_id===room.self_player_id&&!room.payer.accepted)actions.push('accept_payer_role');
   if(host&&room.payer?.accepted&&room.draft.lines.length&&!room.active_battle_id)actions.push('prepare_checkout');
   actions.push('report_item','update_order_draft');if(host)actions.push('resolve_recommendation');
   const battle=room.battles.find(b=>b.battle_id===room.active_battle_id);
-  if(!battle){actions.push('create_battle');return result('await_user');}
+  if(!battle){
+    actions.push('create_battle');
+    if(!host&&room.payer?.player_id===room.self_player_id&&room.payer.accepted&&!checkout&&room.draft.lines.length)
+      return {...result('get_room_state',{since:0,wait_ms:5000}),checkout_guidance:'本人已接受付款责任，等待房主固定清单；继续5秒长轮询，不要求用户催房主。固定后由付款人领取方案并核价，购买仍需确认。'};
+    return result('await_user');
+  }
   actions.push('cancel_battle');
   if(battle.status==='PREPARING'){
     actions.push('set_ready');

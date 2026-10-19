@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { handleRoomRequest, invokeRoomAction } from '../src/room-service.ts';
+import { handleRoomRequest, handleWatchRequest, invokeRoomAction } from '../src/room-service.ts';
 
 function fakeEnv() {
   const calls = [];
@@ -45,4 +45,14 @@ test('HTTP 非房间路由返回 null，错误方法不访问 DO，创建生成�
   await invokeRoomAction(env, { action: 'create', input: { name: 'A', topic: '题目' } });
   assert.match(env.calls[0].id, /^[a-f0-9]{24}$/);
   assert.equal(new URL(env.calls[0].request.url).pathname, `/_create/${env.calls[0].id}`);
+});
+
+test('公开观战路由接受新32位和旧64位token，拒绝截断链接',async()=>{
+  const env=fakeEnv();
+  for(const size of [32,64]){
+    const path=`/watch/${room}/${'c'.repeat(size)}/snapshot`;
+    assert.equal((await handleWatchRequest(new Request('https://poc.test'+path),env))?.status,200);
+  }
+  assert.equal(await handleWatchRequest(new Request(`https://poc.test/watch/${room}/${'c'.repeat(48)}/snapshot`),env),null);
+  assert.equal(env.calls.length,2);
 });

@@ -6,6 +6,10 @@
 | --- | --- | --- | --- | --- |
 | 0.1.0 | [SKILL.md](mcdebate/0.1.0/SKILL.md) | [checkout.md](mcdebate/0.1.0/references/checkout.md) | [ZIP](mcdebate/0.1.0/packages/mcdebate-doubao-0.1.0.zip) | [ZIP](mcdebate/0.1.0/packages/mcdebate-workbuddy-0.1.0.zip) |
 | 0.2.0 | [SKILL.md](mcdebate/0.2.0/SKILL.md) | [checkout.md](mcdebate/0.2.0/references/checkout.md) | [ZIP](mcdebate/0.2.0/packages/mcdebate-doubao-0.2.0.zip) | [ZIP](mcdebate/0.2.0/packages/mcdebate-workbuddy-0.2.0.zip) |
+| 0.3.0（review） | [SKILL.md](mcdebate/0.3.0/SKILL.md) | [checkout.md](mcdebate/0.3.0/references/checkout.md) | [ZIP](mcdebate/0.3.0/packages/mcdebate-doubao-0.3.0.zip) | [ZIP](mcdebate/0.3.0/packages/mcdebate-workbuddy-0.3.0.zip) |
+| 0.3.1（review） | [SKILL.md](mcdebate/0.3.1/SKILL.md) | [checkout.md](mcdebate/0.3.1/references/checkout.md) | [ZIP](mcdebate/0.3.1/packages/mcdebate-doubao-0.3.1.zip) | [ZIP](mcdebate/0.3.1/packages/mcdebate-workbuddy-0.3.1.zip) |
+| 0.3.2（review） | [SKILL.md](mcdebate/0.3.2/SKILL.md) | [checkout.md](mcdebate/0.3.2/references/checkout.md) | [ZIP](mcdebate/0.3.2/packages/mcdebate-doubao-0.3.2.zip) | [ZIP](mcdebate/0.3.2/packages/mcdebate-workbuddy-0.3.2.zip) |
+| 0.3.3（review） | [SKILL.md](mcdebate/0.3.3/SKILL.md) | [checkout.md](mcdebate/0.3.3/references/checkout.md) | [ZIP](mcdebate/0.3.3/packages/mcdebate-doubao-0.3.3.zip) | [ZIP](mcdebate/0.3.3/packages/mcdebate-workbuddy-0.3.3.zip) |
 
 每个版本包含完整的通用源文件及依赖的 references、当时的两份平台导入包，以及 packages/SHA256SUMS。两种导入包的指令正文一致；workbuddy 包补充平台要求的展示名、中英文描述、版本和作者字段。
 
@@ -22,6 +26,32 @@
 - 按self_player_id/host_player_id识别A/B，将双方对战分工写入共享topic，并用reporter_player_id筛选本人候选。当前没有独立偏好字段，分工不是购买授权。
 - 明确AGENT_REPORTED是真实路径资料上报，TEST_FIXTURE才模拟；使用官方建单回执中的payH5Url，已有结账按状态续接，已有订单只取链接或查单，不重复创建。
 - 验证记录：113代码测试、12项独立模拟行为场景、CI和公网接口回归通过；未在这轮创建真实麦当劳订单或支付，手机端新版规则待用户复测。
+
+## 0.3.0 · 角色交接与行为回归 review 版
+
+- 明确开始/续接的首个动作，按本人席位选择候选；本人刷新候选资料后重新设置本局准备。
+- 分清自己推进、等对方和问用户；房主复用已有付款人提名，付款人持续等方案，兼容房主自己付款。
+- 明确结账各步使用成功回执的新版本，UNKNOWN＋空列表保留未知，不以用户确认替代前次请求未受理的证据。
+- 新增22个合成行为场景与最小评估脚本。最终一次同条件对比：0.2.0自动检查15/22、0.3.0自动检查21/22；120项代码测试与类型检查通过。
+- 报价过期仍可能多问；人工另发现链接续接跳过刷新、注册未知时建议重试等问题。自动通过不代表全部语义正确或手机稳定，详见 [验证记录](mcdebate/0.3.0/VALIDATION.md)。本轮未部署、未做真实交易，等待手机验收。
+
+## 0.3.1 · 过期报价与异常续接修订版
+
+- 旧链接和 UNKNOWN 结果先刷新；UNKNOWN 同账户只读查单。报价过期时先重新核价、上报新 QUOTED，再让用户确认新方案；候选刷新后重新准备。
+- 注册身份未返回时明确无法恢复，缺原观战链接绝不拼 URL；结账冻结期间不建议直接改单，辩论说明也约束未经资料支持的事实。
+- 新增一组相似门店编码的合成报价场景。最终完整模型回归自动检查21/23，两个失败均为报价过期后仍停下询问。测试与限制见 [验证记录](mcdebate/0.3.1/VALIDATION.md)。手机与真实业务仍待验收。
+
+## 0.3.2 · 链接交付与过期报价修订版
+
+- 观战链接改为独立一行原样交付，不手写 Markdown 链接；无法核对完整原值时不交付残缺链接。
+- 付款人对过期报价先只读重新核价并上报，再让用户确认新方案；服务端本地引导文字同步修正，但尚未部署。
+- 初次 DeepSeek 针对性回归15/15、随机链接5/5、完整合成场景24/24；代码测试121/121。后续三轮完整重复回归 **70/72**，失败发生在文本回执链接截断及付款人提前停止等待；定向追加 **9/10**。手机端和真实官方业务仍待验收，详见 [初次验证记录](mcdebate/0.3.2/VALIDATION.md)和[重复回归补充记录](../evals/mcdebate/RESULTS-2026-10-18-032-repeat.md)。
+
+## 0.3.3 · 结账来源与有效报价分支修订版
+
+- `TEST_FIXTURE` 的模拟核价成功后不再上报真实路径的 QUOTED；已有有效报价且用户确认同一方案时，不重复核价，直接按当前版本推进 SUBMITTING。
+- 配套服务端 0.6.5 缩短新观战 token、将文本回执中的原始链接置前，并为已接受付款责任的非房主提供持续等待指引；旧观战链接继续有效。
+- DeepSeek 最终关键结账分支重复回归 **15/15**、完整合成场景 **26/26**，代码测试 **125/125**。另一次入口定向测试 **24/25**，失败时遗漏 `create_room.mode=shopping`，链接本身完整；不据此宣称手机端稳定。详见 [验证记录](mcdebate/0.3.3/VALIDATION.md)。本轮未部署、未调用真实麦当劳交易。
 
 ## 后续交付约定
 

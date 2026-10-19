@@ -9,14 +9,14 @@ export function buildWatchUrl(origin: string, roomId: string, token: string) {
   try { url=new URL(origin); } catch { /* 配置错误不能泄露输入 */ }
   if (!url || !['http:','https:'].includes(url.protocol) || url.hostname==='room.internal' ||
       url.username || url.password || url.pathname!=='/' || url.search || url.hash ||
-      !/^[a-f0-9]{24}$/.test(roomId) || !/^[a-f0-9]{64}$/.test(token)) {
+      !/^[a-f0-9]{24}$/.test(roomId) || !/^(?:[a-f0-9]{32}|[a-f0-9]{64})$/.test(token)) {
     throw new RoomError('WATCH_NOT_CONFIGURED','观战入口配置无效',503,'contact_host');
   }
   return `${url.origin}/watch/${roomId}/${token}`;
 }
 
 export async function authorizeWatch(room: StoredRoom | undefined, token: string, now: number) {
-  if (!room || !/^[a-f0-9]{64}$/.test(token) || !room._watch_token_hash ||
+  if (!room || !/^(?:[a-f0-9]{32}|[a-f0-9]{64})$/.test(token) || !room._watch_token_hash ||
       await hashToken(token)!==room._watch_token_hash) {
     throw new RoomError('WATCH_UNAUTHORIZED','观战链接无效',403,'check_watch_url');
   }
