@@ -37,7 +37,7 @@ export class RoomController {
   }
   async handle(request:Request):Promise<Response> {
     const url=new URL(request.url);
-    const watch=/^\/watch\/([a-f0-9]{24})\/([a-f0-9]{64})(?:\/(snapshot|events))?$/.exec(url.pathname);
+    const watch=/^\/watch\/([a-f0-9]{24})\/([a-f0-9]{32}|[a-f0-9]{64})(?:\/(snapshot|events))?$/.exec(url.pathname);
     if(watch){
       if(request.method!=='GET')throw new RoomError('METHOD_NOT_ALLOWED','只读观战不支持此操作',405);
       const room=await this.ctx.storage.get<StoredRoom>('room');await authorizeWatch(room,watch[2],Date.now());
@@ -52,7 +52,7 @@ export class RoomController {
       const token=newToken(),identity={room_id:parts[2],player_id:crypto.randomUUID(),token_hash:await hashToken(token)};
       const options={judgeEnabled:this.env.JUDGE_ENABLED==='true',turnMs:Number(this.env.DEMO_TURN_MS??120000)};
       room=input.mode==='shopping'?createShoppingRoom(input,identity,now,{...options,source:this.env.SHOPPING_DATA_MODE==='fixture'?'TEST_FIXTURE':'AGENT_REPORTED'}):createRoom(input,identity,now,options);
-      room._watch_token=newToken();room._watch_token_hash=await hashToken(room._watch_token);
+      room._watch_token=newToken(16);room._watch_token_hash=await hashToken(room._watch_token);
       const watch_url=buildWatchUrl(this.env.MCDEBATE_PUBLIC_ORIGIN,room.room_id,room._watch_token);
       await this.save(room);return jsonResponse({room:view(room,identity.player_id,0,now),player_id:identity.player_id,player_token:token,watch_url},201);
     }

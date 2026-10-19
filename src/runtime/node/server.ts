@@ -18,7 +18,7 @@ export function createNodeServer(runtime: NodeRuntime,{release='development'}={}
       const method=req.method??'GET',body=['GET','HEAD'].includes(method)?undefined:Readable.toWeb(req);
       const request=new Request(new URL(req.url,origin),{method,headers,signal:abort.signal,...(body?{body,duplex:'half'}:{})} as RequestInit);
       const response=new URL(request.url).pathname==='/health'&&method==='GET'
-        ?jsonResponse({service:'mcdebate-room-poc',runtime:'node',version:'0.6.4',release})
+        ?jsonResponse({service:'mcdebate-room-poc',runtime:'node',version:'0.6.5',release})
         :await runtime.fetch(request);
       res.writeHead(response.status,Object.fromEntries(response.headers));res.flushHeaders();
       if(response.body&&method!=='HEAD')await pipeline(Readable.fromWeb(response.body as import('node:stream/web').ReadableStream),res);
