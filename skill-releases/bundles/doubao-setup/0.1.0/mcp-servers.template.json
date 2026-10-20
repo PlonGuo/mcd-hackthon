@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "mcdebate": {
+      "type": "streamablehttp",
+      "url": "https://47.243.195.171/mcp"
+    },
+    "mcd-mcp": {
+      "type": "streamablehttp",
+      "url": "https://mcp.mcd.cn",
+      "headers": {
+        "Authorization": "Bearer YOUR_MCD_MCP_TOKEN"
+      }
+    }
+  }
+}

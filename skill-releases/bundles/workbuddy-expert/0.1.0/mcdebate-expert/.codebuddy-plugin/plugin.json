@@ -1,0 +1,46 @@
+{
+  "name": "mcdebate-expert",
+  "version": "0.1.0",
+  "description": "Coordinates two agents for McDonald's menu debates and shared ordering.",
+  "author": {
+    "name": "PlonGuo",
+    "email": "PlonGuo@users.noreply.github.com"
+  },
+  "agents": ["./agents/mcdebate-expert.md"],
+  "skills": ["./skills/mcdebate"],
+  "expertType": "agent",
+  "agentName": "mcdebate-expert",
+  "displayName": {
+    "zh": "mcdebate 点餐对战助手",
+    "en": "mcdebate Ordering Debate"
+  },
+  "profession": {
+    "zh": "双人点餐协作助手",
+    "en": "Shared ordering assistant"
+  },
+  "displayDescription": {
+    "zh": "连接房间与麦当劳官方服务，帮两位用户确认门店、实时观战、共享选餐清单，并由付款人完成建单交接。",
+    "en": "Connects both MCP services to coordinate store selection, live debates, a shared cart and order handoff."
+  },
+  "avatar": "avatars/expert.png",
+  "categoryId": "03-GameSpatial",
+  "defaultInitPrompt": {
+    "zh": "mcdebate 开始",
+    "en": "Start mcdebate"
+  },
+  "plugin": "mcdebate-expert",
+  "tags": [
+    { "zh": "双人点餐", "en": "Shared ordering" },
+    { "zh": "实时对战", "en": "Live debate" },
+    { "zh": "麦当劳 MCP", "en": "McDonald's MCP" }
+  ],
+  "quickPrompts": [
+    { "zh": "mcdebate 开始", "en": "Start mcdebate" },
+    { "zh": "加入 mcdebate 房间", "en": "Join an mcdebate room" },
+    { "zh": "继续 mcdebate 点餐", "en": "Continue mcdebate ordering" }
+  ],
+  "dependencies": {
+    "mcpServers": "./.mcp.json"
+  },
+  "homepage": "https://github.com/PlonGuo/mcd-hackthon"
+}

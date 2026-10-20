@@ -3152,6 +3152,18 @@
               "$fixture": "official_order"
             }
           }
+        ],
+        "query-order": [
+          {
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"success\":true,\"code\":200,\"data\":{\"orderId\":\"EVAL-001\",\"orderStatus\":\"待支付\",\"payH5Url\":\"https://payment.example.invalid/pay?orderId=EVAL-001&ticket=abc123\"}}"
+                }
+              ]
+            }
+          }
         ]
       },
       "checks": {
@@ -4818,6 +4830,304 @@
           },
           {
             "name": "simulate_checkout",
+            "max": 0
+          }
+        ],
+        "privateToken": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "roomId": "a1b2c3d4e5f60718293a4b5c"
+      }
+    },
+    {
+      "id": "cart-remove-self",
+      "prompt": "刚才加的麦乐鸡5块我不要了，把我自己的那一行从待买清单删掉；B的薯条别动。",
+      "context": {
+        "identity": {
+          "room_id": "a1b2c3d4e5f60718293a4b5c",
+          "player_id": "player-a",
+          "player_token": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+        },
+        "last_tool_result": {
+          "$fixture": "host_accepted"
+        }
+      },
+      "replies": {
+        "get_room_state": [
+          {
+            "result": {
+              "$fixture": "host_accepted"
+            }
+          }
+        ],
+        "update_order_draft": [
+          {
+            "result": {
+              "isError": false,
+              "structuredContent": {
+                "ok": true,
+                "data": {
+                  "room": {
+                    "draft": {
+                      "version": 3,
+                      "lines": [
+                        {
+                          "line_id": "line-b",
+                          "owner_player_id": "player-b",
+                          "item": {
+                            "item_id": "item-b-fries",
+                            "reporter_player_id": "player-b",
+                            "name": "中薯条",
+                            "meal_code": "EVAL_FRIES",
+                            "unit_price_cents": 1350,
+                            "version": 1,
+                            "store_code": "EVAL_STORE",
+                            "spec": "默认规格",
+                            "queried_at": 1792317570000,
+                            "received_at": 1792317580000,
+                            "source": "AGENT_REPORTED"
+                          },
+                          "quantity": 1
+                        }
+                      ],
+                      "total_cents": 1350
+                    }
+                  }
+                }
+              },
+              "content": []
+            },
+            "terminal": true
+          }
+        ]
+      },
+      "checks": {
+        "firstTool": "get_room_state",
+        "calls": [
+          {
+            "name": "update_order_draft",
+            "args": {
+              "operation": "remove",
+              "line_id": "line-a",
+              "expected_draft_version": 2
+            },
+            "min": 1,
+            "max": 1
+          },
+          {
+            "name": "create-order",
+            "max": 0
+          },
+          {
+            "name": "cancel_battle",
+            "max": 0
+          },
+          {
+            "name": "close_room",
+            "max": 0
+          }
+        ],
+        "privateToken": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "roomId": "a1b2c3d4e5f60718293a4b5c"
+      }
+    },
+    {
+      "id": "cart-decrease-self",
+      "prompt": "我自己的麦乐鸡刚才加了两份，现在少一份，最后只留一份；别动其他商品。",
+      "context": {
+        "identity": {
+          "room_id": "a1b2c3d4e5f60718293a4b5c",
+          "player_id": "player-a",
+          "player_token": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+        },
+        "last_tool_result": {
+          "isError": false,
+          "structuredContent": {
+            "ok": true,
+            "data": {
+              "room": {
+                "$fixture": "base_room",
+                "with": {
+                  "draft": {
+                    "version": 4,
+                    "lines": [
+                      {
+                        "line_id": "line-a",
+                        "owner_player_id": "player-a",
+                        "item": {
+                          "item_id": "item-a",
+                          "reporter_player_id": "player-a",
+                          "name": "麦乐鸡5块",
+                          "meal_code": "EVAL_NUGGETS",
+                          "unit_price_cents": 1400,
+                          "version": 1,
+                          "store_code": "EVAL_STORE",
+                          "spec": "默认规格",
+                          "queried_at": 1792317570000,
+                          "received_at": 1792317580000,
+                          "source": "AGENT_REPORTED"
+                        },
+                        "quantity": 2
+                      }
+                    ],
+                    "total_cents": 2800
+                  }
+                }
+              },
+              "allowed_actions": [
+                "get_room_state",
+                "update_order_draft"
+              ],
+              "next_action": "await_user",
+              "wait_ms": 0,
+              "next_request": null
+            }
+          },
+          "content": []
+        }
+      },
+      "replies": {
+        "get_room_state": [
+          {
+            "result": {
+              "isError": false,
+              "structuredContent": {
+                "ok": true,
+                "data": {
+                  "room": {
+                    "$fixture": "base_room",
+                    "with": {
+                      "draft": {
+                        "version": 4,
+                        "lines": [
+                          {
+                            "line_id": "line-a",
+                            "owner_player_id": "player-a",
+                            "item": {
+                              "item_id": "item-a",
+                              "reporter_player_id": "player-a",
+                              "name": "麦乐鸡5块",
+                              "meal_code": "EVAL_NUGGETS",
+                              "unit_price_cents": 1400,
+                              "version": 1,
+                              "store_code": "EVAL_STORE",
+                              "spec": "默认规格",
+                              "queried_at": 1792317570000,
+                              "received_at": 1792317580000,
+                              "source": "AGENT_REPORTED"
+                            },
+                            "quantity": 2
+                          }
+                        ],
+                        "total_cents": 2800
+                      }
+                    }
+                  },
+                  "allowed_actions": [
+                    "get_room_state",
+                    "update_order_draft"
+                  ],
+                  "next_action": "await_user",
+                  "wait_ms": 0,
+                  "next_request": null
+                }
+              },
+              "content": []
+            }
+          }
+        ],
+        "update_order_draft": [
+          {
+            "result": {
+              "isError": false,
+              "structuredContent": {
+                "ok": true,
+                "data": {
+                  "room": {
+                    "draft": {
+                      "version": 5,
+                      "lines": [
+                        {
+                          "line_id": "line-a",
+                          "owner_player_id": "player-a",
+                          "item": {
+                            "item_id": "item-a",
+                            "reporter_player_id": "player-a",
+                            "name": "麦乐鸡5块",
+                            "meal_code": "EVAL_NUGGETS",
+                            "unit_price_cents": 1400,
+                            "version": 1,
+                            "store_code": "EVAL_STORE",
+                            "spec": "默认规格",
+                            "queried_at": 1792317570000,
+                            "received_at": 1792317580000,
+                            "source": "AGENT_REPORTED"
+                          },
+                          "quantity": 1
+                        }
+                      ],
+                      "total_cents": 1400
+                    }
+                  }
+                }
+              },
+              "content": []
+            },
+            "terminal": true
+          }
+        ]
+      },
+      "checks": {
+        "firstTool": "get_room_state",
+        "calls": [
+          {
+            "name": "update_order_draft",
+            "args": {
+              "operation": "set_quantity",
+              "line_id": "line-a",
+              "quantity": 1,
+              "expected_draft_version": 4
+            },
+            "min": 1,
+            "max": 1
+          },
+          {
+            "name": "create-order",
+            "max": 0
+          }
+        ],
+        "privateToken": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "roomId": "a1b2c3d4e5f60718293a4b5c"
+      }
+    },
+    {
+      "id": "cart-foreign-line",
+      "prompt": "把B自己加的中薯条从清单删掉，我是房主A。",
+      "context": {
+        "identity": {
+          "room_id": "a1b2c3d4e5f60718293a4b5c",
+          "player_id": "player-a",
+          "player_token": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+        },
+        "last_tool_result": {
+          "$fixture": "host_accepted"
+        }
+      },
+      "replies": {
+        "get_room_state": [
+          {
+            "result": {
+              "$fixture": "host_accepted"
+            }
+          }
+        ]
+      },
+      "checks": {
+        "calls": [
+          {
+            "name": "update_order_draft",
+            "max": 0
+          },
+          {
+            "name": "close_room",
             "max": 0
           }
         ],

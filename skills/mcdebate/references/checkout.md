@@ -2,7 +2,7 @@
 
 先 get_room_state 刷新，再读取 room.payer、checkout 和本人身份。checkout 是公开摘要；付款人从 `room.checkout_details.quote` 或已领取方案的 quote 读取完整报价与取餐编码，以房间 server_time 判断有效期。使用客户端已连接的麦当劳官方工具，按实际定义填参，不运行项目脚本或索取账户 Token。
 
-`AGENT_REPORTED` 是真实路径的资料/结果上报，不能当成模拟标记，也不代表后端已独立核验。只有 `TEST_FIXTURE` 使用 simulate_checkout；来源未知先核对，不能凭门店或服务的名称改判来源。真实路径中当前没有可调用的 calculate-price，就说明需启用官方连接器并停止核价；query_demo_catalog 不能检查官方连接或补报价。缺登录/权限同样说明缺失项，不降级成模拟。
+`AGENT_REPORTED` 是真实路径的资料/结果上报，不能当成模拟标记，也不代表后端已独立核验。若本人留有对应的官方 `calculate-price` 成功回执和 QUOTED 上报记录，这份报价已经过官方只读核价；展示时不能仅凭 `AGENT_REPORTED` 字样声称“尚未官方核价”。缺少回执时只说房间记录了报价、后端未独立核验，不编造其来源。只有 `TEST_FIXTURE` 使用 simulate_checkout；来源未知先核对，不能凭门店或服务的名称改判来源。真实路径中当前没有可调用的 calculate-price，就说明需启用官方连接器并停止核价；query_demo_catalog 不能检查官方连接或补报价。缺登录/权限同样说明缺失项，不降级成模拟。
 
 **先按来源分流：**`TEST_FIXTURE` 的 `simulate_checkout(operation="quote")` 成功回执已把报价写入房间；直接展示模拟报价和有效期，等用户确认具体方案。不要再调用 `report_checkout(outcome="QUOTED")` 或官方 `calculate-price`。下文的“官方核价 → 上报 QUOTED → 官方建单”只适用于 `AGENT_REPORTED`。测试房间进入 SUBMITTING 时仍按该工具要求使用 `report_checkout(SUBMITTING)`，随后只用模拟工具建单。
 
@@ -49,7 +49,7 @@
 2. **确认具体方案。** 展示店名/地址、完整餐品/数量、最终总价和实际支持的取餐方式。沿用用户已经明确确认的同一有效方案；信息缺失、价格/规格/方式变化、报价过期或版本冲突则重新核对并补确认。遵守宿主审批，不能用 SUBMITTING 回执代替用户批准。
 3. **取得提交回执。** 使用 QUOTED 成功回执中的当前 checkout.version 和对应 quote，带 checkout_id、quote_id、expected_total_cents、已确认的 take_way_code 和稳定 event_id 上报 SUBMITTING。QUOTED 会推进版本，不能继续用核价前的旧版本。仅明确成功、非重放、当前仍可提交且本客户端尚未发起该次官方建单时，保存回执中的新版本，进入下一步；未知/重放回执先核对，不重新发起。
 4. **调用一次 create-order。** 参数来自同一已确认方案和实际工具定义。等待这次结果，不能和依赖它的 report_checkout 并行。超时或结果未知先记录并报告 UNKNOWN，再 query-order/order-list；没有查到、空历史、错误和新的 event_id 都不授权重下。
-5. **交付并报告。** 从官方成功响应 data 取 orderId、payH5Url，核对与返回订单详情一致。向付款人的用户原样显示“订单已创建、待支付：[打开麦当劳支付](原 payH5Url)”，私下保存原值。随后以当前正确版本向房间仅报告 ORDER_CREATED；上报失败不改变已经建单的事实，先读取核对，不再建单。
+5. **交付并报告。** 从官方成功响应 data 取 orderId、payH5Url，核对本次响应内的订单详情；字段齐全且一致时，无需额外 query-order。向付款人的用户原样显示“订单已创建、待支付：[打开麦当劳支付](原 payH5Url)”，私下保存原值。随后以当前正确版本向房间仅报告 ORDER_CREATED；上报失败不改变已经建单的事实，先读取核对，不再建单。
 
 链接缺失就取已保存的原响应或查同一订单；仍无可用链接则说明实际情况，不能按 orderId 拼接或让用户重复下单冒充完成。官方页面能否唤起 App 取决于手机环境；交付链接不等于已付款，查询官方结果后才能报告 PAID。
 

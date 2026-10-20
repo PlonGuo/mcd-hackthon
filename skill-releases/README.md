@@ -10,8 +10,18 @@
 | 0.3.1（review） | [SKILL.md](mcdebate/0.3.1/SKILL.md) | [checkout.md](mcdebate/0.3.1/references/checkout.md) | [ZIP](mcdebate/0.3.1/packages/mcdebate-doubao-0.3.1.zip) | [ZIP](mcdebate/0.3.1/packages/mcdebate-workbuddy-0.3.1.zip) |
 | 0.3.2（review） | [SKILL.md](mcdebate/0.3.2/SKILL.md) | [checkout.md](mcdebate/0.3.2/references/checkout.md) | [ZIP](mcdebate/0.3.2/packages/mcdebate-doubao-0.3.2.zip) | [ZIP](mcdebate/0.3.2/packages/mcdebate-workbuddy-0.3.2.zip) |
 | 0.3.3（review） | [SKILL.md](mcdebate/0.3.3/SKILL.md) | [checkout.md](mcdebate/0.3.3/references/checkout.md) | [ZIP](mcdebate/0.3.3/packages/mcdebate-doubao-0.3.3.zip) | [ZIP](mcdebate/0.3.3/packages/mcdebate-workbuddy-0.3.3.zip) |
+| 0.3.4（review） | [SKILL.md](mcdebate/0.3.4/SKILL.md) | [checkout.md](mcdebate/0.3.4/references/checkout.md) | [ZIP](mcdebate/0.3.4/packages/mcdebate-doubao-0.3.4.zip) | [ZIP](mcdebate/0.3.4/packages/mcdebate-workbuddy-0.3.4.zip) |
 
 每个版本包含完整的通用源文件及依赖的 references、当时的两份平台导入包，以及 packages/SHA256SUMS。两种导入包的指令正文一致；workbuddy 包补充平台要求的展示名、中英文描述、版本和作者字段。
+
+给最终用户安装时按客户端只选一份 `bundles/` 交付物，不必再单独发送上表 `packages/` 的 Skill ZIP：
+
+| 客户端 | 交付物 | 内容与限制 |
+| --- | --- | --- |
+| WorkBuddy | [专家整合包 0.1.1](bundles/workbuddy-expert/0.1.1/README.md) | 内含 Skill 0.3.4 与两个 MCP 的依赖声明；从专家入口导入，首次使用由用户填写官方 Token。实际客户端导入待验证。 |
+| 豆包 work | [安装资料包 0.1.1](bundles/doubao-setup/0.1.1/README.md) | 内含 Skill 0.3.4 导入 ZIP、两条 MCP 的配置模板和说明；解压后分步安装，不能作为原生 Plugin 一键导入。 |
+
+两份 bundle 独立编号，只引用已归档的 Skill 0.3.4，不追改历史版本。豆包开放平台虽说明 Plugin 可组合 Skill 与 MCP，但目前公开页面只提供内测入驻信息，没有足够的导入格式说明可制作可靠的豆包原生 Plugin 包。两种客户端均需用户自行提供麦当劳官方 Token。
 
 ## 0.1.0 · 首次手机链路版本
 
@@ -52,6 +62,12 @@
 - `TEST_FIXTURE` 的模拟核价成功后不再上报真实路径的 QUOTED；已有有效报价且用户确认同一方案时，不重复核价，直接按当前版本推进 SUBMITTING。
 - 配套服务端 0.6.5 缩短新观战 token、将文本回执中的原始链接置前，并为已接受付款责任的非房主提供持续等待指引；旧观战链接继续有效。
 - DeepSeek 最终关键结账分支重复回归 **15/15**、完整合成场景 **26/26**，代码测试 **125/125**。另一次入口定向测试 **24/25**，失败时遗漏 `create_room.mode=shopping`，链接本身完整；不据此宣称手机端稳定。详见 [验证记录](mcdebate/0.3.3/VALIDATION.md)。本轮未部署、未调用真实麦当劳交易。
+
+## 0.3.4 · 清单删除与撤回边界 review 版
+
+- 把删除本人商品、撤回加购、减数量和改成指定数量映射到 `update_order_draft` 的 `remove` / `set_quantity`，先刷新清单并按行归属判断权限；房主不能修改对方个人行。
+- 补明已固定结账、撤回本局准备、拒绝推荐、门店已锁定时的处理；价格展示与辩论发言增加来源和长度校验。
+- 购物清单定向合成回归 **9/9**，一次完整合成回归 **29/29**，代码测试 **125/125**。最后报价措辞补充后的定向回归 **1/2**，失败是模型跳过状态刷新后展示旧会话报价；最终措辞未重跑完整回归。真实订单取消与退款仍未覆盖，详见[验证记录](mcdebate/0.3.4/VALIDATION.md)。
 
 ## 后续交付约定
 

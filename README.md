@@ -71,9 +71,18 @@ App 截图保留了“超时未支付，自动取消”的实际状态，用于�
 
 ## 安装与开始
 
+用户按客户端**只选一份交付物**，不需要同时下载 `packages/` 与 `bundles/`。两份交付物都包含 mcdebate Skill 0.3.4，均不含个人 Token：
+
+| 客户端 | 给用户的交付物 | 安装方式 |
+| --- | --- | --- |
+| WorkBuddy | [专家整合包](skill-releases/bundles/workbuddy-expert/0.1.1/mcdebate-workbuddy-expert-0.1.1.zip) | 从**专家**入口导入，首次召唤时按卡片连接两个 MCP、输入个人麦当劳 Token；[详情](skill-releases/bundles/workbuddy-expert/0.1.1/README.md) |
+| 豆包 work | [安装资料包](skill-releases/bundles/doubao-setup/0.1.1/mcdebate-doubao-setup-0.1.1.zip) | 解压后导入其中的 Skill ZIP，再按说明连接两个 MCP、输入个人麦当劳 Token；[详情](skill-releases/bundles/doubao-setup/0.1.1/README.md) |
+
+WorkBuddy 包已完成静态校验，尚待客户端实际导入与手机端验证。豆包资料包**不是原生 Plugin**，不能一键安装两个 MCP；已连接两个 MCP 的用户只需更新 Skill。
+
 ### 1. 两边分别连接 MCP
 
-每个参与选品的客户端启用以下服务：
+每个参与选品的客户端启用以下服务。WorkBuddy 使用上面的整合专家包时，按其首次使用的引导连接即可，跳过手动配置；豆包按资料包说明配置：
 
 | 服务 | 地址 | 传输方式 | 认证 |
 | --- | --- | --- | --- |
@@ -86,8 +95,10 @@ App 截图保留了“超时未支付，自动取消”的实际状态，用于�
 
 ### 2. 导入 mcdebate 技能
 
-- 豆包 work：[下载 0.2.0 导入包](skill-releases/mcdebate/0.2.0/packages/mcdebate-doubao-0.2.0.zip)。在技能管理中选择上传技能，导入 ZIP。
-- workbuddy：[下载 0.2.0 导入包](skill-releases/mcdebate/0.2.0/packages/mcdebate-workbuddy-0.2.0.zip)。进入“专家·技能·连接器 → 技能 → 添加技能 → 上传技能”，导入 ZIP。
+已使用 WorkBuddy 整合专家包、或已通过豆包资料包导入技能的一方跳过此步。以下为单独导入 Skill 的方式：
+
+- 豆包 work：[下载 0.3.4 导入包](skill-releases/mcdebate/0.3.4/packages/mcdebate-doubao-0.3.4.zip)。在技能管理中选择上传技能，导入 ZIP。
+- workbuddy（手动连接两个 MCP 时）：[下载 0.3.4 技能包](skill-releases/mcdebate/0.3.4/packages/mcdebate-workbuddy-0.3.4.zip)。进入“专家·技能·连接器 → 技能 → 添加技能 → 上传技能”，导入 ZIP。
 
 完成后启用技能；手机端新建会话，手动选择 `mcdebate`，并确认两个 MCP 在当前会话可用。不同版本的客户端入口可能有差异，桌面端安装后要实际确认手机端是否可选。Skill 提供流程指引，不能强制宿主预加载 MCP 或持续后台执行。
 
