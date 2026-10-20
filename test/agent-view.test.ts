@@ -80,3 +80,53 @@ test('已接受的非房主付款人等待房主固定清单时持续读状态',
   assert.equal(waiting.next_request?.arguments.wait_ms,5000);
   assert.equal(waiting.wait_ms,5000);
 });
+
+test('入场准备按角色区分：房主缺门店决定才问，加入者等待锁店，房主等待加入',async()=>{
+  const {createShoppingRoom,transitionShopping,viewShopping}=await import('../src/shopping/room.ts');
+  const now=1000000;
+  let state=createShoppingRoom({mode:'shopping',name:'甲',topic:'A鸡块 B薯条'},
+    {room_id:'a'.repeat(24),player_id:'A',token_hash:'a'},now);
+  const view=(id:string)=>buildAgentView(viewShopping(state,id,0,now));
+  assert.equal(view('A').next_action,'await_user','门店尚未确认不能自动锁定');
+  state=transitionShopping(state,'context',{store_code:'x',name:'店',address:'路',fulfillment:'SELF_PICKUP',expected_context_version:0},'A',now).room;
+  const solo=view('A');
+  assert.equal(solo.next_action,'get_room_state');
+  assert.equal(solo.next_request?.arguments.wait_ms,5000);
+  assert.equal(solo.allowed_actions.includes('create_battle'),false,'未到齐时不建议必然被拒绝的建局');
+  state=transitionShopping(state,'join',{name:'乙'},null,now,{player_id:'B',token_hash:'b'}).room;
+  assert.equal(view('B').next_action,'get_room_state','加入者在首局前自动等房主筹备');
+  assert.equal(view('A').allowed_actions.includes('create_battle'),true);
+  state.context=null;
+  const guest=view('B');
+  assert.equal(guest.next_action,'get_room_state');
+  assert.equal(guest.next_request?.arguments.wait_ms,5000);
+  assert.equal(guest.allowed_actions.includes('set_room_context'),false);
+  assert.equal(view('A').next_action,'await_user');
+});
+
+test('准备轮询刷新本人在线；短暂离线恢复后自动给房主开局动作且不撤回准备',async()=>{
+  const {createShoppingRoom,transitionShopping,viewShopping}=await import('../src/shopping/room.ts');
+  const now=1000000;
+  let state=createShoppingRoom({mode:'shopping',name:'甲',topic:'对战'},
+    {room_id:'a'.repeat(24),player_id:'A',token_hash:'a'},now);
+  const step=(action:string,input:unknown,actor='A',at=now,identity?:{player_id:string;token_hash:string})=>{
+    state=transitionShopping(state,action,input,actor,at,identity).room;
+  };
+  step('join',{name:'乙'},null,now,{player_id:'B',token_hash:'b'});
+  step('context',{store_code:'x',name:'店',address:'路',fulfillment:'SELF_PICKUP',expected_context_version:0});
+  for(const actor of ['A','B'])step('item',{meal_code:actor,name:actor,spec:'份',unit_price_cents:100,queried_at:now},actor);
+  step('battle',{topic:'选谁',event_id:'auto-start'});
+  const battle_id=state.active_battle_id;
+  for(const actor of ['A','B'])step('ready',{battle_id,ready:true,candidate_item_id:state.items.find(i=>i.reporter_player_id===actor)!.item_id},actor);
+  step('state',{},'A',now+31000);
+  assert.equal(buildAgentView(viewShopping(state,'A',0,now+31000)).next_action,'get_room_state');
+  assert.throws(()=>step('start',{battle_id},'A',now+31000),/最近未刷新|刷新状态/);
+  step('state',{},'B',now+32000);
+  step('state',{},'A',now+33000);
+  const ready=buildAgentView(viewShopping(state,'A',0,now+33000));
+  assert.equal(ready.next_action,'start_debate');
+  assert.equal(ready.next_request?.arguments.battle_id,battle_id);
+  step('start',{battle_id},'A',now+33000);
+  assert.equal(state.battles[0]!.status,'ACTIVE');
+  assert.ok(state.battles[0]!.ready.A&&state.battles[0]!.ready.B);
+});

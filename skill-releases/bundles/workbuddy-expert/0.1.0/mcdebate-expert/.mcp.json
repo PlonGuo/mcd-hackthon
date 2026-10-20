@@ -1,0 +1,43 @@
+{
+  "mcpServers": {
+    "mcdebate": {
+      "type": "http",
+      "url": "https://47.243.195.171/mcp",
+      "x-workbuddy": {
+        "displayName": { "zh": "mcdebate 房间 MCP", "en": "mcdebate room MCP" },
+        "description": { "zh": "创建或加入房间、对战与共享点餐清单。", "en": "Rooms, debates and shared ordering." },
+        "auth": { "type": "none" }
+      }
+    },
+    "mcd-mcp": {
+      "type": "http",
+      "url": "https://mcp.mcd.cn",
+      "headers": {
+        "Authorization": "Bearer ${MCD_MCP_TOKEN}"
+      },
+      "x-workbuddy": {
+        "displayName": { "zh": "麦当劳官方 MCP", "en": "McDonald's official MCP" },
+        "description": { "zh": "用你自己的麦当劳 MCP Token 查询菜单、核价和建单。", "en": "Use your personal token for menu, pricing and ordering." },
+        "auth": {
+          "type": "token",
+          "tokenSchema": {
+            "title": { "zh": "连接麦当劳官方 MCP", "en": "Connect McDonald's MCP" },
+            "description": { "zh": "输入你在麦当劳开放平台申请的个人 MCP Token。", "en": "Enter your personal token from McDonald's developer portal." },
+            "docUrl": "https://open.mcd.cn/mcp",
+            "docLabel": { "zh": "申请 MCP Token", "en": "Get an MCP token" },
+            "fields": [
+              {
+                "key": "MCD_MCP_TOKEN",
+                "label": { "zh": "MCP Token", "en": "MCP token" },
+                "placeholder": { "zh": "粘贴个人 MCP Token", "en": "Paste your personal MCP token" },
+                "type": "password",
+                "required": true,
+                "description": { "zh": "仅在本机保存并用于 Authorization 请求头。", "en": "Stored locally for the Authorization header." }
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

@@ -18,6 +18,8 @@
     "typecheck": "tsc --noEmit",
     "demo:model": "node --env-file=.dev.vars scripts/model-demo.ts",
     "check:shopping-ui": "node scripts/shopping-ui-check.ts",
+    "check:watch-effects": "node scripts/watch-effects-check.ts",
+    "preview:watch": "node --watch scripts/watch-preview.ts",
     "smoke:checkout": "node scripts/checkout-smoke.ts",
     "check:checkout-ui": "node scripts/checkout-ui-check.ts",
     "probe:mcd": "node --env-file=.dev.vars scripts/mcd-schema-probe.ts",

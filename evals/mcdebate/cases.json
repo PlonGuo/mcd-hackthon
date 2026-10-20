@@ -2304,6 +2304,416 @@
         }
       },
       "content": []
+    },
+    "prepare_solo_a": {
+      "isError": false,
+      "structuredContent": {
+        "ok": true,
+        "data": {
+          "room": {
+            "$fixture": "base_room",
+            "with": {
+              "draft": {
+                "version": 0,
+                "lines": [],
+                "total_cents": 0
+              },
+              "payer": null,
+              "checkout": null,
+              "players": [
+                {
+                  "player_id": "player-a",
+                  "name": "房主",
+                  "agent_label": "A",
+                  "last_seen_at": 1792317600000,
+                  "ready": false,
+                  "online": true
+                }
+              ],
+              "joined_players": 1,
+              "items": [
+                {
+                  "item_id": "item-a",
+                  "reporter_player_id": "player-a",
+                  "name": "麦乐鸡5块",
+                  "meal_code": "EVAL_NUGGETS",
+                  "unit_price_cents": 1400,
+                  "version": 1,
+                  "store_code": "EVAL_STORE",
+                  "spec": "默认规格",
+                  "queried_at": 1792317570000,
+                  "received_at": 1792317580000,
+                  "source": "AGENT_REPORTED"
+                }
+              ]
+            }
+          },
+          "allowed_actions": [
+            "get_room_state",
+            "report_item",
+            "update_order_draft",
+            "create_battle",
+            "set_ready",
+            "start_debate"
+          ],
+          "next_action": "await_user",
+          "wait_ms": 0,
+          "next_request": null
+        }
+      },
+      "content": []
+    },
+    "prepare_joined_a": {
+      "isError": false,
+      "structuredContent": {
+        "ok": true,
+        "data": {
+          "room": {
+            "$fixture": "base_room",
+            "with": {
+              "draft": {
+                "version": 0,
+                "lines": [],
+                "total_cents": 0
+              },
+              "payer": null,
+              "checkout": null,
+              "items": [
+                {
+                  "item_id": "item-a",
+                  "reporter_player_id": "player-a",
+                  "name": "麦乐鸡5块",
+                  "meal_code": "EVAL_NUGGETS",
+                  "unit_price_cents": 1400,
+                  "version": 1,
+                  "store_code": "EVAL_STORE",
+                  "spec": "默认规格",
+                  "queried_at": 1792317570000,
+                  "received_at": 1792317580000,
+                  "source": "AGENT_REPORTED"
+                }
+              ]
+            }
+          },
+          "allowed_actions": [
+            "get_room_state",
+            "report_item",
+            "update_order_draft",
+            "create_battle",
+            "set_ready",
+            "start_debate"
+          ],
+          "next_action": "await_user",
+          "wait_ms": 0,
+          "next_request": null
+        }
+      },
+      "content": []
+    },
+    "prepare_created_a": {
+      "isError": false,
+      "structuredContent": {
+        "ok": true,
+        "data": {
+          "room": {
+            "$fixture": "base_room",
+            "with": {
+              "draft": {
+                "version": 0,
+                "lines": [],
+                "total_cents": 0
+              },
+              "payer": null,
+              "checkout": null,
+              "active_battle_id": "battle-prepare",
+              "battles": [
+                {
+                  "battle_id": "battle-prepare",
+                  "topic": "A（房主）支持麦乐鸡；B（加入者）支持薯条",
+                  "status": "PREPARING",
+                  "ready": {
+                    "player-a": false,
+                    "player-b": false
+                  },
+                  "candidates": {},
+                  "arguments": [],
+                  "current_turn": null,
+                  "judgement": {
+                    "status": "NOT_STARTED"
+                  },
+                  "recommendation": null
+                }
+              ],
+              "items": [
+                {
+                  "item_id": "item-a",
+                  "reporter_player_id": "player-a",
+                  "name": "麦乐鸡5块",
+                  "meal_code": "EVAL_NUGGETS",
+                  "unit_price_cents": 1400,
+                  "version": 1,
+                  "store_code": "EVAL_STORE",
+                  "spec": "默认规格",
+                  "queried_at": 1792317570000,
+                  "received_at": 1792317580000,
+                  "source": "AGENT_REPORTED"
+                }
+              ]
+            }
+          },
+          "allowed_actions": [
+            "get_room_state",
+            "report_item",
+            "update_order_draft",
+            "create_battle",
+            "set_ready",
+            "start_debate"
+          ],
+          "next_action": "await_user",
+          "wait_ms": 0,
+          "next_request": null
+        }
+      },
+      "content": []
+    },
+    "prepare_ready_a": {
+      "isError": false,
+      "structuredContent": {
+        "ok": true,
+        "data": {
+          "room": {
+            "$fixture": "base_room",
+            "with": {
+              "draft": {
+                "version": 0,
+                "lines": [],
+                "total_cents": 0
+              },
+              "payer": null,
+              "checkout": null,
+              "active_battle_id": "battle-prepare",
+              "battles": [
+                {
+                  "battle_id": "battle-prepare",
+                  "topic": "A（房主）支持麦乐鸡；B（加入者）支持薯条",
+                  "status": "PREPARING",
+                  "ready": {
+                    "player-a": true,
+                    "player-b": false
+                  },
+                  "candidates": {},
+                  "arguments": [],
+                  "current_turn": null,
+                  "judgement": {
+                    "status": "NOT_STARTED"
+                  },
+                  "recommendation": null
+                }
+              ],
+              "items": [
+                {
+                  "item_id": "item-a",
+                  "reporter_player_id": "player-a",
+                  "name": "麦乐鸡5块",
+                  "meal_code": "EVAL_NUGGETS",
+                  "unit_price_cents": 1400,
+                  "version": 1,
+                  "store_code": "EVAL_STORE",
+                  "spec": "默认规格",
+                  "queried_at": 1792317570000,
+                  "received_at": 1792317580000,
+                  "source": "AGENT_REPORTED"
+                }
+              ]
+            }
+          },
+          "allowed_actions": [
+            "get_room_state",
+            "report_item",
+            "update_order_draft",
+            "create_battle",
+            "set_ready",
+            "start_debate"
+          ],
+          "next_action": "get_room_state",
+          "wait_ms": 5000,
+          "next_request": {
+            "tool": "get_room_state",
+            "arguments": {
+              "room_id": "a1b2c3d4e5f60718293a4b5c",
+              "since": 0,
+              "wait_ms": 5000
+            },
+            "credential_required": true
+          }
+        }
+      },
+      "content": []
+    },
+    "prepare_both_ready": {
+      "isError": false,
+      "structuredContent": {
+        "ok": true,
+        "data": {
+          "room": {
+            "$fixture": "base_room",
+            "with": {
+              "draft": {
+                "version": 0,
+                "lines": [],
+                "total_cents": 0
+              },
+              "payer": null,
+              "checkout": null,
+              "active_battle_id": "battle-prepare",
+              "battles": [
+                {
+                  "battle_id": "battle-prepare",
+                  "topic": "A（房主）支持麦乐鸡；B（加入者）支持薯条",
+                  "status": "PREPARING",
+                  "ready": {
+                    "player-a": true,
+                    "player-b": true
+                  },
+                  "candidates": {},
+                  "arguments": [],
+                  "current_turn": null,
+                  "judgement": {
+                    "status": "NOT_STARTED"
+                  },
+                  "recommendation": null
+                }
+              ]
+            }
+          },
+          "allowed_actions": [
+            "get_room_state",
+            "report_item",
+            "update_order_draft",
+            "create_battle",
+            "set_ready",
+            "start_debate"
+          ],
+          "next_action": "start_debate",
+          "wait_ms": 0,
+          "next_request": {
+            "tool": "start_debate",
+            "arguments": {
+              "room_id": "a1b2c3d4e5f60718293a4b5c",
+              "battle_id": "battle-prepare"
+            },
+            "credential_required": true
+          }
+        }
+      },
+      "content": []
+    },
+    "prepare_race_offline": {
+      "isError": false,
+      "structuredContent": {
+        "ok": true,
+        "data": {
+          "room": {
+            "$fixture": "base_room",
+            "with": {
+              "draft": {
+                "version": 0,
+                "lines": [],
+                "total_cents": 0
+              },
+              "payer": null,
+              "checkout": null,
+              "players": [
+                {
+                  "player_id": "player-a",
+                  "name": "房主",
+                  "agent_label": "A",
+                  "last_seen_at": 1792317600000,
+                  "ready": false,
+                  "online": true
+                },
+                {
+                  "player_id": "player-b",
+                  "name": "挑战者",
+                  "agent_label": "B",
+                  "last_seen_at": 1792317600000,
+                  "ready": false,
+                  "online": false
+                }
+              ],
+              "active_battle_id": "battle-prepare",
+              "battles": [
+                {
+                  "battle_id": "battle-prepare",
+                  "topic": "A（房主）支持麦乐鸡；B（加入者）支持薯条",
+                  "status": "PREPARING",
+                  "ready": {
+                    "player-a": true,
+                    "player-b": true
+                  },
+                  "candidates": {},
+                  "arguments": [],
+                  "current_turn": null,
+                  "judgement": {
+                    "status": "NOT_STARTED"
+                  },
+                  "recommendation": null
+                }
+              ]
+            }
+          },
+          "allowed_actions": [
+            "get_room_state",
+            "report_item",
+            "update_order_draft",
+            "create_battle",
+            "set_ready",
+            "start_debate"
+          ],
+          "next_action": "get_room_state",
+          "wait_ms": 5000,
+          "next_request": {
+            "tool": "get_room_state",
+            "arguments": {
+              "room_id": "a1b2c3d4e5f60718293a4b5c",
+              "since": 0,
+              "wait_ms": 5000
+            },
+            "credential_required": true
+          }
+        }
+      },
+      "content": []
+    },
+    "prepare_guest_no_store": {
+      "isError": false,
+      "structuredContent": {
+        "ok": true,
+        "data": {
+          "room": {
+            "$fixture": "base_room",
+            "with": {
+              "draft": {
+                "version": 0,
+                "lines": [],
+                "total_cents": 0
+              },
+              "payer": null,
+              "checkout": null,
+              "self_player_id": "player-b",
+              "context": null,
+              "items": []
+            }
+          },
+          "allowed_actions": [
+            "get_room_state"
+          ],
+          "next_action": "await_user",
+          "wait_ms": 0,
+          "next_request": null
+        }
+      },
+      "content": []
     }
   },
   "officialTools": [
@@ -3150,6 +3560,18 @@
           {
             "result": {
               "$fixture": "official_order"
+            }
+          }
+        ],
+        "query-order": [
+          {
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"success\":true,\"code\":200,\"data\":{\"orderId\":\"EVAL-001\",\"orderStatus\":\"待支付\",\"payH5Url\":\"https://payment.example.invalid/pay?orderId=EVAL-001&ticket=abc123\"}}"
+                }
+              ]
             }
           }
         ]
@@ -4824,6 +5246,843 @@
         "privateToken": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
         "roomId": "a1b2c3d4e5f60718293a4b5c"
       }
+    },
+    {
+      "id": "cart-remove-self",
+      "prompt": "刚才加的麦乐鸡5块我不要了，把我自己的那一行从待买清单删掉；B的薯条别动。",
+      "context": {
+        "identity": {
+          "room_id": "a1b2c3d4e5f60718293a4b5c",
+          "player_id": "player-a",
+          "player_token": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+        },
+        "last_tool_result": {
+          "$fixture": "host_accepted"
+        }
+      },
+      "replies": {
+        "get_room_state": [
+          {
+            "result": {
+              "$fixture": "host_accepted"
+            }
+          }
+        ],
+        "update_order_draft": [
+          {
+            "result": {
+              "isError": false,
+              "structuredContent": {
+                "ok": true,
+                "data": {
+                  "room": {
+                    "draft": {
+                      "version": 3,
+                      "lines": [
+                        {
+                          "line_id": "line-b",
+                          "owner_player_id": "player-b",
+                          "item": {
+                            "item_id": "item-b-fries",
+                            "reporter_player_id": "player-b",
+                            "name": "中薯条",
+                            "meal_code": "EVAL_FRIES",
+                            "unit_price_cents": 1350,
+                            "version": 1,
+                            "store_code": "EVAL_STORE",
+                            "spec": "默认规格",
+                            "queried_at": 1792317570000,
+                            "received_at": 1792317580000,
+                            "source": "AGENT_REPORTED"
+                          },
+                          "quantity": 1
+                        }
+                      ],
+                      "total_cents": 1350
+                    }
+                  }
+                }
+              },
+              "content": []
+            },
+            "terminal": true
+          }
+        ]
+      },
+      "checks": {
+        "firstTool": "get_room_state",
+        "calls": [
+          {
+            "name": "update_order_draft",
+            "args": {
+              "operation": "remove",
+              "line_id": "line-a",
+              "expected_draft_version": 2
+            },
+            "min": 1,
+            "max": 1
+          },
+          {
+            "name": "create-order",
+            "max": 0
+          },
+          {
+            "name": "cancel_battle",
+            "max": 0
+          },
+          {
+            "name": "close_room",
+            "max": 0
+          }
+        ],
+        "privateToken": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "roomId": "a1b2c3d4e5f60718293a4b5c"
+      }
+    },
+    {
+      "id": "cart-decrease-self",
+      "prompt": "我自己的麦乐鸡刚才加了两份，现在少一份，最后只留一份；别动其他商品。",
+      "context": {
+        "identity": {
+          "room_id": "a1b2c3d4e5f60718293a4b5c",
+          "player_id": "player-a",
+          "player_token": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+        },
+        "last_tool_result": {
+          "isError": false,
+          "structuredContent": {
+            "ok": true,
+            "data": {
+              "room": {
+                "$fixture": "base_room",
+                "with": {
+                  "draft": {
+                    "version": 4,
+                    "lines": [
+                      {
+                        "line_id": "line-a",
+                        "owner_player_id": "player-a",
+                        "item": {
+                          "item_id": "item-a",
+                          "reporter_player_id": "player-a",
+                          "name": "麦乐鸡5块",
+                          "meal_code": "EVAL_NUGGETS",
+                          "unit_price_cents": 1400,
+                          "version": 1,
+                          "store_code": "EVAL_STORE",
+                          "spec": "默认规格",
+                          "queried_at": 1792317570000,
+                          "received_at": 1792317580000,
+                          "source": "AGENT_REPORTED"
+                        },
+                        "quantity": 2
+                      }
+                    ],
+                    "total_cents": 2800
+                  }
+                }
+              },
+              "allowed_actions": [
+                "get_room_state",
+                "update_order_draft"
+              ],
+              "next_action": "await_user",
+              "wait_ms": 0,
+              "next_request": null
+            }
+          },
+          "content": []
+        }
+      },
+      "replies": {
+        "get_room_state": [
+          {
+            "result": {
+              "isError": false,
+              "structuredContent": {
+                "ok": true,
+                "data": {
+                  "room": {
+                    "$fixture": "base_room",
+                    "with": {
+                      "draft": {
+                        "version": 4,
+                        "lines": [
+                          {
+                            "line_id": "line-a",
+                            "owner_player_id": "player-a",
+                            "item": {
+                              "item_id": "item-a",
+                              "reporter_player_id": "player-a",
+                              "name": "麦乐鸡5块",
+                              "meal_code": "EVAL_NUGGETS",
+                              "unit_price_cents": 1400,
+                              "version": 1,
+                              "store_code": "EVAL_STORE",
+                              "spec": "默认规格",
+                              "queried_at": 1792317570000,
+                              "received_at": 1792317580000,
+                              "source": "AGENT_REPORTED"
+                            },
+                            "quantity": 2
+                          }
+                        ],
+                        "total_cents": 2800
+                      }
+                    }
+                  },
+                  "allowed_actions": [
+                    "get_room_state",
+                    "update_order_draft"
+                  ],
+                  "next_action": "await_user",
+                  "wait_ms": 0,
+                  "next_request": null
+                }
+              },
+              "content": []
+            }
+          }
+        ],
+        "update_order_draft": [
+          {
+            "result": {
+              "isError": false,
+              "structuredContent": {
+                "ok": true,
+                "data": {
+                  "room": {
+                    "draft": {
+                      "version": 5,
+                      "lines": [
+                        {
+                          "line_id": "line-a",
+                          "owner_player_id": "player-a",
+                          "item": {
+                            "item_id": "item-a",
+                            "reporter_player_id": "player-a",
+                            "name": "麦乐鸡5块",
+                            "meal_code": "EVAL_NUGGETS",
+                            "unit_price_cents": 1400,
+                            "version": 1,
+                            "store_code": "EVAL_STORE",
+                            "spec": "默认规格",
+                            "queried_at": 1792317570000,
+                            "received_at": 1792317580000,
+                            "source": "AGENT_REPORTED"
+                          },
+                          "quantity": 1
+                        }
+                      ],
+                      "total_cents": 1400
+                    }
+                  }
+                }
+              },
+              "content": []
+            },
+            "terminal": true
+          }
+        ]
+      },
+      "checks": {
+        "firstTool": "get_room_state",
+        "calls": [
+          {
+            "name": "update_order_draft",
+            "args": {
+              "operation": "set_quantity",
+              "line_id": "line-a",
+              "quantity": 1,
+              "expected_draft_version": 4
+            },
+            "min": 1,
+            "max": 1
+          },
+          {
+            "name": "create-order",
+            "max": 0
+          }
+        ],
+        "privateToken": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "roomId": "a1b2c3d4e5f60718293a4b5c"
+      }
+    },
+    {
+      "id": "cart-foreign-line",
+      "prompt": "把B自己加的中薯条从清单删掉，我是房主A。",
+      "context": {
+        "identity": {
+          "room_id": "a1b2c3d4e5f60718293a4b5c",
+          "player_id": "player-a",
+          "player_token": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+        },
+        "last_tool_result": {
+          "$fixture": "host_accepted"
+        }
+      },
+      "replies": {
+        "get_room_state": [
+          {
+            "result": {
+              "$fixture": "host_accepted"
+            }
+          }
+        ]
+      },
+      "checks": {
+        "calls": [
+          {
+            "name": "update_order_draft",
+            "max": 0
+          },
+          {
+            "name": "close_room",
+            "max": 0
+          }
+        ],
+        "privateToken": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "roomId": "a1b2c3d4e5f60718293a4b5c"
+      }
+    },
+    {
+      "id": "prepare-host-wait-join",
+      "prompt": "麦乐鸡对薯条，开始吧。",
+      "context": {
+        "room_id": "a1b2c3d4e5f60718293a4b5c",
+        "player_id": "player-a",
+        "player_token": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "user_decisions": {
+          "request": "与朋友开始对战",
+          "store_confirmed": {
+            "version": 1,
+            "store_code": "EVAL_STORE",
+            "name": "示例餐厅",
+            "address": "示例路1号",
+            "fulfillment": "SELF_PICKUP",
+            "source": "AGENT_REPORTED"
+          },
+          "A": "麦乐鸡5块",
+          "B": "中薯条"
+        },
+        "last_result": {
+          "$fixture": "prepare_solo_a"
+        }
+      },
+      "maxSteps": 12,
+      "replies": {
+        "get_room_state": [
+          {
+            "result": {
+              "$fixture": "prepare_solo_a"
+            }
+          },
+          {
+            "result": {
+              "$fixture": "prepare_solo_a"
+            }
+          },
+          {
+            "result": {
+              "$fixture": "prepare_joined_a"
+            }
+          },
+          {
+            "result": {
+              "$fixture": "prepare_ready_a"
+            }
+          },
+          {
+            "result": {
+              "$fixture": "prepare_both_ready"
+            }
+          }
+        ],
+        "create_battle": [
+          {
+            "result": {
+              "$fixture": "prepare_created_a"
+            }
+          }
+        ],
+        "set_ready": [
+          {
+            "result": {
+              "$fixture": "prepare_ready_a"
+            }
+          }
+        ],
+        "start_debate": [
+          {
+            "result": {
+              "ok": true,
+              "data": {
+                "status": "ACTIVE"
+              }
+            },
+            "terminal": true
+          }
+        ]
+      },
+      "checks": {
+        "firstTool": "get_room_state",
+        "privateToken": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "roomId": "a1b2c3d4e5f60718293a4b5c",
+        "calls": [
+          {
+            "name": "get_room_state",
+            "args": {
+              "wait_ms": 5000
+            },
+            "min": 4
+          },
+          {
+            "name": "create_battle",
+            "min": 1,
+            "max": 1
+          },
+          {
+            "name": "set_ready",
+            "args": {
+              "ready": true,
+              "candidate_item_id": "item-a"
+            },
+            "min": 1,
+            "max": 1
+          },
+          {
+            "name": "start_debate",
+            "min": 1,
+            "max": 1
+          },
+          {
+            "name": "create_room",
+            "max": 0
+          },
+          {
+            "name": "update_order_draft",
+            "max": 0
+          },
+          {
+            "name": "create-order",
+            "max": 0
+          }
+        ]
+      },
+      "currentAgentView": true
+    },
+    {
+      "id": "prepare-start-race",
+      "prompt": "开始对战。",
+      "context": {
+        "room_id": "a1b2c3d4e5f60718293a4b5c",
+        "player_id": "player-a",
+        "player_token": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "user_decisions": {
+          "request": "与朋友开始对战",
+          "store_confirmed": {
+            "version": 1,
+            "store_code": "EVAL_STORE",
+            "name": "示例餐厅",
+            "address": "示例路1号",
+            "fulfillment": "SELF_PICKUP",
+            "source": "AGENT_REPORTED"
+          },
+          "A": "麦乐鸡5块",
+          "B": "中薯条"
+        },
+        "last_result": {
+          "$fixture": "prepare_both_ready"
+        }
+      },
+      "maxSteps": 9,
+      "replies": {
+        "get_room_state": [
+          {
+            "result": {
+              "$fixture": "prepare_both_ready"
+            }
+          },
+          {
+            "result": {
+              "$fixture": "prepare_race_offline"
+            }
+          },
+          {
+            "result": {
+              "$fixture": "prepare_both_ready"
+            }
+          }
+        ],
+        "start_debate": [
+          {
+            "result": {
+              "isError": true,
+              "structuredContent": {
+                "ok": false,
+                "error": {
+                  "code": "PLAYER_OFFLINE",
+                  "message": "另一位 Agent 最近未刷新；保持准备并继续5秒轮询，恢复在线后房主再开局，无需用户重复确认"
+                }
+              }
+            }
+          },
+          {
+            "result": {
+              "ok": true,
+              "data": {
+                "status": "ACTIVE"
+              }
+            },
+            "terminal": true
+          }
+        ]
+      },
+      "checks": {
+        "firstTool": "get_room_state",
+        "privateToken": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "roomId": "a1b2c3d4e5f60718293a4b5c",
+        "calls": [
+          {
+            "name": "get_room_state",
+            "args": {
+              "wait_ms": 5000
+            },
+            "min": 1
+          },
+          {
+            "name": "start_debate",
+            "min": 2,
+            "max": 2
+          },
+          {
+            "name": "set_ready",
+            "max": 0
+          },
+          {
+            "name": "cancel_battle",
+            "max": 0
+          },
+          {
+            "name": "close_room",
+            "max": 0
+          },
+          {
+            "name": "update_order_draft",
+            "max": 0
+          },
+          {
+            "name": "create-order",
+            "max": 0
+          }
+        ]
+      },
+      "currentAgentView": true
+    },
+    {
+      "id": "prepare-guest-wait-store",
+      "prompt": "使用 mcdebate 加入房间 a1b2c3d4e5f60718293a4b5c。",
+      "maxSteps": 7,
+      "replies": {
+        "join_room": [
+          {
+            "result": {
+              "isError": false,
+              "structuredContent": {
+                "ok": true,
+                "data": {
+                  "room": {
+                    "$fixture": "base_room",
+                    "with": {
+                      "draft": {
+                        "version": 0,
+                        "lines": [],
+                        "total_cents": 0
+                      },
+                      "payer": null,
+                      "checkout": null,
+                      "self_player_id": "player-b",
+                      "context": null,
+                      "items": []
+                    }
+                  },
+                  "allowed_actions": [
+                    "get_room_state"
+                  ],
+                  "next_action": "await_user",
+                  "wait_ms": 0,
+                  "next_request": null,
+                  "player_id": "player-b",
+                  "player_token": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+                  "watch_url": "https://watch.example.invalid/watch/a1b2c3d4e5f60718293a4b5c/fedcba9876543210fedcba9876543210"
+                }
+              }
+            }
+          }
+        ],
+        "get_room_state": [
+          {
+            "result": {
+              "$fixture": "prepare_guest_no_store"
+            }
+          },
+          {
+            "result": {
+              "$fixture": "prepare_guest_no_store"
+            }
+          },
+          {
+            "result": {
+              "isError": false,
+              "structuredContent": {
+                "ok": true,
+                "data": {
+                  "room": {
+                    "$fixture": "base_room",
+                    "with": {
+                      "draft": {
+                        "version": 0,
+                        "lines": [],
+                        "total_cents": 0
+                      },
+                      "payer": null,
+                      "checkout": null,
+                      "self_player_id": "player-b",
+                      "items": []
+                    }
+                  },
+                  "allowed_actions": [
+                    "get_room_state",
+                    "report_item",
+                    "update_order_draft",
+                    "create_battle",
+                    "set_ready",
+                    "start_debate"
+                  ],
+                  "next_action": "await_user",
+                  "wait_ms": 0,
+                  "next_request": null
+                }
+              },
+              "content": []
+            },
+            "terminal": true
+          }
+        ]
+      },
+      "checks": {
+        "firstTool": "join_room",
+        "privateToken": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "roomId": "a1b2c3d4e5f60718293a4b5c",
+        "calls": [
+          {
+            "name": "join_room",
+            "min": 1,
+            "max": 1
+          },
+          {
+            "name": "get_room_state",
+            "args": {
+              "wait_ms": 5000
+            },
+            "min": 3
+          },
+          {
+            "name": "set_room_context",
+            "max": 0
+          },
+          {
+            "name": "create_battle",
+            "max": 0
+          },
+          {
+            "name": "update_order_draft",
+            "max": 0
+          },
+          {
+            "name": "create-order",
+            "max": 0
+          }
+        ]
+      },
+      "currentAgentView": true
+    },
+    {
+      "id": "prepare-user-pause",
+      "prompt": "先别准备，停止等待，我还要想一想。",
+      "context": {
+        "room_id": "a1b2c3d4e5f60718293a4b5c",
+        "player_id": "player-a",
+        "player_token": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "user_decisions": {
+          "request": "与朋友开始对战",
+          "store_confirmed": {
+            "version": 1,
+            "store_code": "EVAL_STORE",
+            "name": "示例餐厅",
+            "address": "示例路1号",
+            "fulfillment": "SELF_PICKUP",
+            "source": "AGENT_REPORTED"
+          },
+          "A": "麦乐鸡5块",
+          "B": "中薯条"
+        },
+        "last_result": {
+          "$fixture": "prepare_both_ready"
+        }
+      },
+      "maxSteps": 4,
+      "replies": {
+        "get_room_state": [
+          {
+            "result": {
+              "$fixture": "prepare_both_ready"
+            }
+          }
+        ],
+        "set_ready": [
+          {
+            "result": {
+              "ok": true,
+              "data": {
+                "ready": false
+              }
+            },
+            "terminal": true
+          }
+        ]
+      },
+      "checks": {
+        "firstTool": "get_room_state",
+        "privateToken": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "roomId": "a1b2c3d4e5f60718293a4b5c",
+        "calls": [
+          {
+            "name": "get_room_state",
+            "min": 1,
+            "max": 1
+          },
+          {
+            "name": "set_ready",
+            "args": {
+              "ready": false
+            },
+            "min": 1,
+            "max": 1
+          },
+          {
+            "name": "start_debate",
+            "max": 0
+          },
+          {
+            "name": "update_order_draft",
+            "max": 0
+          },
+          {
+            "name": "create-order",
+            "max": 0
+          }
+        ]
+      },
+      "currentAgentView": true
+    },
+    {
+      "id": "prepare-store-choice-needed",
+      "prompt": "候选门店我还没选，先给我看看，不要替我决定。",
+      "context": {
+        "room_id": "a1b2c3d4e5f60718293a4b5c",
+        "player_id": "player-a",
+        "player_token": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "user_decisions": {
+          "city": "上海",
+          "location": "四川北路",
+          "request": "与朋友对战"
+        },
+        "last_result": {
+          "$fixture": "created"
+        },
+        "store_candidates": [
+          {
+            "store_code": "OPTION_A",
+            "name": "示例A店",
+            "address": "示例路1号"
+          },
+          {
+            "store_code": "OPTION_B",
+            "name": "示例B店",
+            "address": "示例路2号"
+          }
+        ]
+      },
+      "maxSteps": 4,
+      "replies": {
+        "get_room_state": [
+          {
+            "result": {
+              "$fixture": "created"
+            }
+          }
+        ],
+        "query-nearby-stores": [
+          {
+            "result": {
+              "ok": true,
+              "data": {
+                "stores": [
+                  {
+                    "store_code": "OPTION_A",
+                    "name": "示例A店",
+                    "address": "示例路1号"
+                  },
+                  {
+                    "store_code": "OPTION_B",
+                    "name": "示例B店",
+                    "address": "示例路2号"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "checks": {
+        "privateToken": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "roomId": "a1b2c3d4e5f60718293a4b5c",
+        "calls": [
+          {
+            "name": "get_room_state",
+            "min": 0,
+            "max": 1
+          },
+          {
+            "name": "set_room_context",
+            "max": 0
+          },
+          {
+            "name": "set_ready",
+            "max": 0
+          },
+          {
+            "name": "start_debate",
+            "max": 0
+          },
+          {
+            "name": "update_order_draft",
+            "max": 0
+          },
+          {
+            "name": "create-order",
+            "max": 0
+          }
+        ],
+        "forbiddenText": [
+          "已锁定",
+          "已选定",
+          "已经选定",
+          "已准备好"
+        ]
+      },
+      "currentAgentView": true
     }
   ]
 }

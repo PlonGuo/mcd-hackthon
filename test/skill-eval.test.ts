@@ -57,3 +57,26 @@ test('允许模型同批读取参考和状态，不把两个独立读取误判�
   }});
   assert.deepEqual(result.errors,[]);assert.equal(result.calls.length,2);
 });
+test('筹备评估使用实际服务端指引，未到齐时不能用预设成功回执放过提前建局',async()=>{
+  const {createShoppingRoom,viewShopping}=await import('../src/shopping/room.ts');
+  const state=createShoppingRoom({mode:'shopping',name:'A',topic:'对战'},{room_id:'a'.repeat(24),player_id:'A',token_hash:'a'},1000);
+  state.context={version:1,store_code:'demo',name:'店',address:'路',fulfillment:'SELF_PICKUP',source:'TEST_FIXTURE'};
+  const original={structuredContent:{data:{room:viewShopping(state,'A',0,1000),next_action:'await_user'}}};
+  const tools=['get_room_state','create_battle'].map(name=>({name,description:'评估工具',inputSchema:{type:'object',properties:{},additionalProperties:false}}));
+  let n=0;
+  const result=await runScenario({id:'current-guidance',prompt:'开始',currentAgentView:true,replies:{
+    get_room_state:[{result:original}],create_battle:[{result:{ok:true},terminal:true}],
+  },checks:{}},'正文','参考',tools,config,{fetchImpl:async(_url,options)=>{
+    n++;
+    if(n===2){
+      const messages=JSON.parse(String(options?.body)).messages;
+      const data=JSON.parse(messages.at(-1).content).structuredContent.data;
+      assert.equal(data.next_action,'get_room_state');
+      assert.equal(data.next_request.arguments.wait_ms,5000);
+    }
+    return Response.json({choices:[{message:{content:null,tool_calls:[{id:'r'+n,type:'function',
+      function:{name:n===1?'get_room_state':'create_battle',arguments:'{}'}}]},finish_reason:'tool_calls'}]});
+  }});
+  assert.deepEqual(result.errors,['DISALLOWED_PREPARATION_ACTION:create_battle']);
+  assert.equal(original.structuredContent.data.next_action,'await_user','不修改历史上下文');
+});
