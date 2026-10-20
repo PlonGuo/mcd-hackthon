@@ -46,7 +46,7 @@ export function battleAction(room: ShoppingRoom, action: string, raw: unknown, a
   } else if(action==='start'){
     const input=parse(schemas.start,raw);host(room,actor);const battle=activeBattle(room,input.battle_id);
     if(battle.status!=='PREPARING'||!room.players.every(p=>battle.ready[p.player_id]))fail('ROOM_NOT_READY','双方尚未选好候选并准备');
-    for(const p of room.players){if(now-p.last_seen_at>30000)fail('PLAYER_OFFLINE','请双方刷新状态后开局');const snapshot=battle.ready[p.player_id]!;fresh(snapshot,now);if(getItem(room,snapshot.item_id).version!==snapshot.version)fail('CANDIDATE_CHANGED','候选资料变化，请重新准备');}
+    for(const p of room.players){if(now-p.last_seen_at>30000)fail('PLAYER_OFFLINE','另一位 Agent 最近未刷新；保持准备并继续5秒轮询，恢复在线后房主再开局，无需用户重复确认');const snapshot=battle.ready[p.player_id]!;fresh(snapshot,now);if(getItem(room,snapshot.item_id).version!==snapshot.version)fail('CANDIDATE_CHANGED','候选资料变化，请重新准备');}
     battle.candidates={A:structuredClone(battle.ready[room.players[0].player_id]!),B:structuredClone(battle.ready[room.players[1].player_id]!)};battle.status='ACTIVE';setTurn(room,battle,now);
   } else if(action==='cancel'){
     const input=parse(schemas.cancel,raw);const battle=activeBattle(room,input.battle_id);battle.status='CANCELLED';battle.current_turn=null;

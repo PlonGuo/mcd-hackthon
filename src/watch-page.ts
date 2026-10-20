@@ -8,7 +8,33 @@ const js=String.raw`
 'use strict';
 const $=id=>document.getElementById(id);let source,last=-1,finished=false,checking=false,lastRoom,connected=false,lastBattle=null;
 let effects=[],celebrated=null;
+let following=true,unread=0,unreadResult=false,previousScroll=0,touchY=0;
 const path=location.pathname.replace(/\/$/,'');
+function liveTarget(){return !$('judgement').hidden?$('judgement'):!$('judge-status').hidden?$('judge-status'):!$('waiting').hidden?$('waiting'):$('messages').lastElementChild??$('empty');}
+function updateFollow(){
+  $('follow-live').hidden=following;
+  $('unread-label').textContent=unreadResult?'判决已出 · ':unread?unread+' 条新发言 · ':'';
+}
+function pauseFollow(){following=false;updateFollow();}
+function resumeFollow(){following=true;unread=0;unreadResult=false;updateFollow();}
+function updateCompact(){
+  $('compact-status').hidden=!lastRoom||$('arena').getBoundingClientRect().bottom>0;
+  const round=lastRoom?.current_player_id?'第 '+Math.ceil((lastRoom.turn_index+1)/2)+' 轮 · ':'';
+  $('compact-phase').textContent=!connected&&!finished?'连接恢复中':round+$('phase').textContent;
+}
+function updateJudgeStatus(){
+  const j=lastRoom?.judgement,status=j?.status;
+  const cancelled=lastRoom?.mode==='shopping'&&lastRoom.battles.find(b=>b.battle_id===lastBattle)?.status==='CANCELLED';
+  const visible=!cancelled&&(status==='PENDING'||status==='FAILED');
+  $('judge-status').hidden=!visible;if(!visible)return;
+  const pending=status==='PENDING';
+  $('judge-status').dataset.state=pending?'pending':'failed';
+  $('judge-status').querySelector('.dots').hidden=!pending||!connected;
+  $('judge-status-title').textContent=pending?'交锋已结束，裁判正在评分':'评分未完成，本局暂无判决';
+  $('judge-status-detail').textContent=pending
+    ?connected?'正在评估双方的切题、依据、回应与趣味，结果会自动出现。':'连接中断，正在恢复。重新连接后会同步评分结果。'
+    :lastRoom.mode==='shopping'?'本局未产生胜者。请回到 Agent 查看原因；点餐清单仍保留。':'本局未产生胜者，请回到 Agent 查看评分失败的原因。';
+}
 function mountEffects(){
   if(effects.length)return;
   for(const side of ['a','b']){
@@ -16,6 +42,7 @@ function mountEffects(){
     catch{effects.push(null);}
   }
   updateStage();
+  updateJudgeStatus();updateCompact();
 }
 function updateStage(){
   $('connection').dataset.state=connected?'live':finished?'ended':'offline';
@@ -39,16 +66,20 @@ function updateWaiting(){
   const room=lastRoom,visible=connected&&!finished&&(room?.mode==='shopping'?room.battles.find(b=>b.battle_id===room.active_battle_id)?.status==='ACTIVE':room?.status==='ACTIVE')&&Boolean(room.current_player_id);
   $('waiting').hidden=!visible;
   if(visible){$('waiting-name').textContent='等待 '+playerName(room,room.current_player_id)+' 发言';$('waiting').classList.toggle('message-b',room.current_player_id===room.players[1]?.player_id);}
-  updateStage();
+  updateStage();updateJudgeStatus();updateCompact();
 }
-function scrollLatest(element){requestAnimationFrame(()=>element.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'end'}));}
+function scrollLatest(element){requestAnimationFrame(()=>{if(following)element.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'end'});});}
 function stop(){finished=true;connected=false;source?.close();updateWaiting();$('connection').textContent='对局已结束';}
 function notice(text){$('notice').hidden=!text;$('notice').textContent=text;}
 function playerName(room,id){return room.players.find(p=>p.player_id===id)?.name??'辩手';}
 function renderShopping(room){
-  const shopping=room.mode==='shopping';$('shopping').hidden=!shopping;$('history-section').hidden=!shopping;if(!shopping)return;
+  const shopping=room.mode==='shopping';$('shopping').hidden=!shopping;$('history-section').hidden=!shopping;$('cart-dock').hidden=!shopping;if(!shopping)return;
   $('store').textContent=room.context?room.context.name+' · '+room.context.address:'等待用户确认门店';
   $('data-source').textContent=room.data_source==='TEST_FIXTURE'?'测试数据 · 非官方门店或报价':'Agent 查询后上报 · 参考价';
+  const quantity=room.draft.lines.reduce((total,line)=>total+line.quantity,0);
+  $('cart-dock').hidden=false;
+  $('dock-quantity').textContent=quantity+' 件商品';$('dock-total').textContent='¥'+(room.draft.total_cents/100).toFixed(2);
+  $('cart-summary').textContent=quantity?quantity+' 件商品':'暂无商品';
   $('draft-lines').replaceChildren(...room.draft.lines.map(line=>{
     const li=document.createElement('li');li.className='draft-line';
     const top=document.createElement('div');top.className='line-top';const name=document.createElement('span'),price=document.createElement('span');
@@ -78,9 +109,10 @@ function render(room){
   if(room.sequence<=last)return;last=room.sequence;lastRoom=room;
   renderShopping(room);
   const battle=room.mode==='shopping'?(room.battles.find(b=>b.battle_id===room.active_battle_id)??room.battles.at(-1)):null;
-  if(room.mode==='shopping'&&lastBattle!==(battle?.battle_id??null)){lastBattle=battle?.battle_id??null;$('messages').replaceChildren();$('judgement').hidden=true;}
+  if(room.mode==='shopping'&&lastBattle!==(battle?.battle_id??null)){lastBattle=battle?.battle_id??null;$('messages').replaceChildren();$('judgement').hidden=true;unread=0;unreadResult=false;$('score-details').open=!matchMedia('(max-width:600px)').matches;}
   $('topic').textContent=room.topic;$('progress').textContent=room.turn_index+' / '+room.max_turns+' 条发言';$('count').textContent=room.arguments.length+' 条发言';
-  $('turns').replaceChildren(...Array.from({length:room.max_turns},(_,i)=>{const dot=document.createElement('span');dot.className=i<room.turn_index?'done':i===room.turn_index?'current':'';return dot;}));
+  const ongoing=room.mode==='shopping'?room.status==='OPEN'&&battle?.status==='ACTIVE':room.status==='ACTIVE';
+  $('turns').replaceChildren(...Array.from({length:room.max_turns},(_,i)=>{const dot=document.createElement('span');dot.className=(i%2?'side-b':'side-a')+' '+(i<room.turn_index?'done':ongoing&&i===room.turn_index?'current':'');return dot;}));
   for(let i=0;i<2;i++){
     const element=$('player-'+(i?'b':'a')),player=room.players[i];
     element.querySelector('h2').textContent=player?.name??'等待对手';
@@ -89,15 +121,16 @@ function render(room){
     label.hidden=!candidate;label.textContent=candidate?'支持 '+candidate.name:'';
   }
   $('empty').hidden=room.arguments.length>0;
-  const currentNodes=new Map([...$('messages').children].map(e=>[Number(e.dataset.sequence),e]));let newest,newJudgement=false;
+  const currentNodes=new Map([...$('messages').children].map(e=>[Number(e.dataset.sequence),e]));let newest,newJudgement=false,newCount=0;
   for(const argument of room.arguments){
     if(currentNodes.has(argument.sequence))continue;
     const li=document.createElement('li');li.dataset.sequence=argument.sequence;
     li.className=argument.player_id===room.players[1]?.player_id?'message-b':'message-a';
     const meta=document.createElement('div');meta.className='message-meta';
-    meta.textContent='第 '+Math.ceil(argument.sequence/2)+' 轮 · '+playerName(room,argument.player_id);
+    const name=document.createElement('span'),round=document.createElement('span');
+    name.textContent=playerName(room,argument.player_id);round.className='message-round';round.textContent='第 '+Math.ceil(argument.sequence/2)+' 轮';meta.append(name,round);
     const bubble=document.createElement('div');bubble.className='bubble';bubble.textContent=argument.text;
-    li.append(meta,bubble);$('messages').append(li);newest=li;
+    li.append(meta,bubble);$('messages').append(li);newest=li;newCount++;
   }
   const j=room.judgement;
   let phase={WAITING:'等待双方入场并准备',READY:'双方已就绪，等待房主开局',ACTIVE:'轮到 '+playerName(room,room.current_player_id)+' 发言',
@@ -109,12 +142,17 @@ function render(room){
     phase='对局完成，裁判已给出结果';newJudgement=$('judgement').hidden;$('judgement').hidden=false;const result=j.result;
     $('judgement').dataset.winnerSide=result.winner_player_id===room.players[1]?.player_id?'b':'a';
     $('winner').textContent=result.winner_player_id?playerName(room,result.winner_player_id)+' 获胜':'历史对局未记录胜者';$('summary').textContent=result.summary;
+    for(let i=0;i<2;i++){
+      const side=i?'b':'a',player=room.players[i],score=result.scores.find(s=>s.player_id===player?.player_id);
+      $('score-value-'+side).textContent=score?String(score.total):'—';
+      $('score-name-'+side).textContent=player?.name??side.toUpperCase()+' 方';
+    }
     $('tie-break').hidden=!result.tie_break;$('tie-break').textContent=result.tie_break?'双方总分相同，裁判决胜：'+result.tie_break.reason:'';
-    $('scores').replaceChildren(...result.scores.map(s=>{
+    $('scores').replaceChildren(...room.players.map(player=>result.scores.find(s=>s.player_id===player.player_id)).filter(Boolean).map(s=>{
       const row=document.createElement('div');row.className='score-row '+(s.player_id===room.players[1]?.player_id?'side-b':'side-a');
       const top=document.createElement('div');top.className='score-top';const name=document.createElement('span'),total=document.createElement('span');name.textContent=playerName(room,s.player_id);total.textContent=s.total+' / 100';top.append(name,total);
       const detail=document.createElement('p');detail.className='score-detail';detail.textContent='切题 '+s.fit+'/40 · 依据 '+s.evidence+'/30 · 回应 '+s.response+'/20 · 趣味 '+s.humor+'/10';
-      const meter=document.createElement('progress');meter.className='score-meter';meter.max=100;meter.value=s.total;meter.setAttribute('aria-label',playerName(room,s.player_id)+' 本局得分');
+      const meter=document.createElement('progress');meter.className='score-meter'+(newJudgement?' reveal':'');meter.max=100;meter.value=s.total;meter.setAttribute('aria-label',playerName(room,s.player_id)+' 本局得分');
       const reason=document.createElement('p');reason.className='score-reason';reason.textContent=s.reason;row.append(top,meter,detail,reason);return row;
     }));
     $('round-comments').replaceChildren(...result.round_comments.map(c=>{const li=document.createElement('li');li.textContent='第 '+c.round+' 轮：'+c.comment;return li;}));
@@ -123,7 +161,10 @@ function render(room){
   $('phase').textContent=phase;
   updateWaiting();
   if(['CLOSED','EXPIRED'].includes(room.status)||(room.mode!=='shopping'&&(room.status==='PAUSED'||(room.status==='FINISHED'&&j?.status!=='PENDING'))))stop();
-  if(newJudgement)scrollLatest($('judgement'));else if(newest)scrollLatest($('waiting').hidden?newest:$('waiting'));
+  if(newJudgement||newest){
+    if(following)scrollLatest(liveTarget());
+    else{unread+=newCount;unreadResult=unreadResult||newJudgement;updateFollow();}
+  }
 }
 async function snapshot(){
   const r=await fetch(path+'/snapshot',{cache:'no-store',signal:AbortSignal.timeout(10000)});const body=await r.json();
@@ -133,7 +174,7 @@ async function start(){
   try{
     render(await snapshot());if(finished)return;
     source=new EventSource(path+'/events');
-    source.onopen=()=>{connected=true;$('connection').textContent='现场已连接';notice('');updateWaiting();};
+    source.onopen=()=>{connected=true;$('connection').textContent='现场已连接';notice('');updateWaiting();if(following&&lastRoom?.arguments.length)scrollLatest(liveTarget());};
     source.addEventListener('snapshot',event=>{try{render(JSON.parse(event.data));}catch{notice('收到的数据无法显示，请刷新页面。');}});
     source.onerror=async()=>{
       if(finished)return;connected=false;updateWaiting();$('connection').textContent='连接中断，正在重连';
@@ -145,6 +186,22 @@ async function start(){
 }
 window.addEventListener('pagehide',()=>{source?.close();connected=false;for(const effect of effects)effect?.dispose();effects=[];updateWaiting();});
 window.addEventListener('pageshow',event=>{if(event.persisted){mountEffects();if(!finished)start();}});
+$('score-details').open=!matchMedia('(max-width:600px)').matches;
+$('follow-live').addEventListener('click',event=>{event.preventDefault();resumeFollow();scrollLatest(liveTarget());});
+$('view-cart').addEventListener('click',event=>{event.preventDefault();pauseFollow();$('shopping-details').open=true;$('shopping').scrollIntoView({block:'start',behavior:'instant'});$('shopping-details').querySelector('summary').focus({preventScroll:true});});
+for(const link of document.querySelectorAll('.brand,#compact-status a'))link.addEventListener('click',pauseFollow);
+window.addEventListener('wheel',event=>{if(event.deltaY<0)pauseFollow();},{passive:true});
+window.addEventListener('touchstart',event=>{touchY=event.touches[0]?.clientY??0;},{passive:true});
+window.addEventListener('touchmove',event=>{const y=event.touches[0]?.clientY??touchY;if(y>touchY+3)pauseFollow();touchY=y;},{passive:true});
+window.addEventListener('keydown',event=>{if(['ArrowUp','PageUp','Home'].includes(event.key))pauseFollow();});
+window.addEventListener('scroll',()=>{
+  if(!following&&scrollY>previousScroll){
+    const rect=liveTarget().getBoundingClientRect(),bottom=innerHeight-(matchMedia('(max-width:600px)').matches?100:24);
+    if(rect.bottom>=60&&rect.bottom<=bottom)resumeFollow();
+  }
+  previousScroll=scrollY;updateCompact();
+},{passive:true});
+window.addEventListener('resize',updateCompact);
 mountEffects();
 start();
 `;

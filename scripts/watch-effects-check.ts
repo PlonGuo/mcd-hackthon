@@ -77,6 +77,17 @@ try {
       await page.locator('#winner').filter({hasText: '麦乐鸡派 获胜'}).waitFor();
       assert.equal(await page.locator('#player-a.is-winner').count(), 1);
       assert.equal(await page.locator('.score-meter').count(), 2);
+      assert.equal(await page.locator('#score-value-a').innerText(), '87');
+      assert.equal(await page.locator('#score-value-b').innerText(), '83');
+      const argumentsLayout = await page.locator('#messages > li').evaluateAll(nodes =>
+        nodes.map(node => { const r = node.getBoundingClientRect(); return {x: r.x, y: r.y, bottom: r.bottom}; }));
+      if (width > 600) {
+        assert.equal(argumentsLayout[0]!.y, argumentsLayout[1]!.y, '同轮双方发言并排');
+        assert.ok(argumentsLayout[1]!.x > argumentsLayout[0]!.x);
+      } else {
+        assert.equal(argumentsLayout[0]!.x, argumentsLayout[1]!.x, '手机端按发言先后顺序排列');
+        assert.ok(argumentsLayout[1]!.y > argumentsLayout[0]!.bottom);
+      }
       assert.equal(await overflow(page), false);
       await page.screenshot({path: `${evidence}/result-${width}.png`, fullPage: true});
 
@@ -99,9 +110,24 @@ try {
         await page.waitForTimeout(200);
       }
       assert.ok(Math.max(...centers) - Math.min(...centers) > .6, '字形应有可见位移，而不只是亚像素闪烁');
+      await page.locator('.shopping-heading').click();
+      assert.equal(await page.locator('.shopping-body').isVisible(), false);
       const repeated = previewSnapshot(5); repeated.sequence++;
+      repeated.draft.lines[0]!.quantity = 2;
+      repeated.draft.total_cents += 1250;
+      // Score order from the API must not swap the A/B scoreboard labels.
+      if (repeated.judgement?.status === 'SUCCEEDED') repeated.judgement.result.scores.reverse();
       preview.publish(repeated);
-      await page.waitForTimeout(300);
+      await page.locator('#cart-summary').filter({hasText: '3 件商品'}).waitFor();
+      assert.equal(await page.locator('.shopping-body').isVisible(), false, '实时清单更新保留折叠状态');
+      assert.equal(await page.locator('#score-value-a').innerText(), '87');
+      assert.equal(await page.locator('#score-value-b').innerText(), '83');
+      assert.match(await page.locator('.score-row').first().textContent() ?? '', /麦乐鸡派/);
+      assert.equal(await page.locator('.score-meter.reveal').count(), 0, '清单更新不得重播比分入场动画');
+      await page.locator('.shopping-heading').focus();
+      await page.keyboard.press('Enter');
+      assert.equal(await page.locator('.shopping-body').isVisible(), true, '键盘可以展开清单');
+      assert.match(await page.locator('#draft-total').innerText(), /40\.00/);
       assert.equal(await page.locator('.portrait.has-particles').count(), 2);
       await page.evaluate(() => scrollTo(0, document.body.scrollHeight));
       await page.waitForTimeout(200);
@@ -128,9 +154,56 @@ try {
       await waitConnected(page);
       assert.equal(await page.locator('canvas').count(), 2);
       assert.deepEqual(errors, []);
-      console.log(JSON.stringify({width,ok:true,checks:['实际像素','连续帧','双方候选与回合','自动滚动','断线暂停/恢复','判决后持续流动','离屏暂停/恢复','减少动态效果','320px缩放','生命周期释放/重建','CSP/无异常']}));
+      console.log(JSON.stringify({width,ok:true,checks:['实际像素','连续帧','双方候选与回合','自动滚动','断线暂停/恢复','发言响应式排版','比分归属','清单折叠/实时同步/键盘','判决后持续流动','离屏暂停/恢复','减少动态效果','320px缩放','生命周期释放/重建','CSP/无异常']}));
     } finally { await page.close(); }
   }
+  // A reader can leave the live edge without losing their place or the result.
+  const reading = await browser.newPage({viewport: {width: 390, height: 850}, reducedMotion: 'reduce'});
+  reading.setDefaultTimeout(10000);
+  try {
+    preview.publish(previewSnapshot(2));
+    await reading.goto(preview.url); await waitConnected(reading);
+    await reading.waitForFunction(() => document.getElementById('waiting')!.getBoundingClientRect().bottom < innerHeight - 80);
+    await reading.keyboard.press('Home');
+    await reading.waitForFunction(() => scrollY === 0);
+    preview.publish(previewSnapshot(4));
+    await reading.locator('#unread-label').filter({hasText: '2 条新发言'}).waitFor();
+    assert.equal(await reading.evaluate(() => scrollY), 0, '读历史时新消息不夺走位置');
+    assert.match(await reading.locator('#judge-status-title').innerText(), /裁判正在评分/);
+    preview.publish(previewSnapshot(5));
+    await reading.locator('#unread-label').filter({hasText: '判决已出'}).waitFor();
+    assert.equal(await reading.evaluate(() => scrollY), 0, '判决不打断历史阅读');
+    assert.equal(await reading.locator('#score-details').getAttribute('open'), null, '手机评分细节默认折叠');
+    await reading.locator('#follow-live').click();
+    await reading.waitForFunction(() => {
+      const result=document.getElementById('judgement')!.getBoundingClientRect();
+      return result.bottom <= document.getElementById('cart-dock')!.getBoundingClientRect().top;
+    });
+    assert.equal(await reading.locator('#compact-status').isVisible(), true);
+    assert.equal(await reading.locator('#follow-live').isVisible(), false);
+    await reading.locator('#score-details > summary').focus(); await reading.keyboard.press('Enter');
+    assert.equal(await reading.locator('#scores').isVisible(), true, '键盘展开评分细节');
+    const sync=previewSnapshot(5);sync.sequence+=1;preview.publish(sync);
+    await reading.waitForTimeout(100);
+    assert.equal(await reading.locator('#scores').isVisible(), true, '更新保留评分展开选择');
+    await reading.locator('#view-cart').click();
+    assert.equal(await reading.locator('#shopping-details').getAttribute('open'), '');
+    const shopping=await reading.locator('#shopping').boundingBox();
+    assert.ok(shopping && shopping.y>=52 && shopping.y<100, '清单定位避开顶部状态条');
+    assert.equal(await reading.locator('#follow-live').isVisible(), true, '查看清单后可返回现场');
+    await reading.setViewportSize({width:320,height:740});
+    assert.equal(await overflow(reading),false);
+    await reading.screenshot({path:`${evidence}/reading-mobile.png`,fullPage:true});
+    const failed=previewSnapshot(4);failed.sequence=20;
+    failed.judgement={status:'FAILED',error_code:'MODEL_TIMEOUT'};
+    failed.battles[0]!.judgement=failed.judgement;failed.battles[0]!.status='FAILED';
+    failed.active_battle_id=null;preview.publish(failed);
+    await reading.reload();await waitConnected(reading);
+    assert.match(await reading.locator('#judge-status-title').innerText(),/暂无判决/);
+    assert.equal(await reading.locator('#judge-status .dots').isVisible(),false);
+    assert.equal(await reading.locator('#judgement').isVisible(),false);
+    console.log('历史阅读/新消息提醒/返回现场/评分中与失败/手机状态与清单导航/评分折叠：通过');
+  } finally {await reading.close();preview.publish(previewSnapshot(5));}
   const fallback = await browser.newPage();
   try {
     await fallback.addInitScript(() => {

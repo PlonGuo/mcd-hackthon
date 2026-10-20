@@ -22,7 +22,8 @@ export function mountMorphingParticles(container: HTMLElement, letter: 'A' | 'B'
   container.appendChild(canvas);
   const motion = matchMedia('(prefers-reduced-motion: reduce)');
   let pixelRatio = 0;
-  const ink = letter === 'A' ? '#b82428' : '#a2750c';
+  const ink = getComputedStyle(container).getPropertyValue('--particle-ink').trim()
+    || (letter === 'A' ? '#ff8b7b' : '#ffdf72');
   const sample = document.createElement('canvas');
   sample.width = sample.height = 120;
   const sampler = sample.getContext('2d', {willReadFrequently: true})!;
